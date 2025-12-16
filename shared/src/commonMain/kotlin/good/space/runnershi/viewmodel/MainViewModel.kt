@@ -2,6 +2,7 @@ package good.space.runnershi.viewmodel
 
 import good.space.runnershi.auth.TokenStorage
 import good.space.runnershi.network.ApiClient
+import good.space.runnershi.state.RunningStateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,7 +63,10 @@ class MainViewModel(
         // 1. Room DB의 러닝 데이터 삭제 (로그아웃 시 모든 미완료 데이터 제거)
         onLogoutCallback?.invoke()
         
-        // 2. 토큰 삭제를 먼저 완료한 후 상태 변경
+        // 2. 러닝 상태 초기화 (시간, 거리, 경로 등 모든 러닝 정보 리셋)
+        RunningStateManager.reset()
+        
+        // 3. 토큰 삭제를 먼저 완료한 후 상태 변경
         tokenStorage.clearTokens()
         // 토큰이 정말 삭제되었는지 확인
         val token = tokenStorage.getAccessToken()

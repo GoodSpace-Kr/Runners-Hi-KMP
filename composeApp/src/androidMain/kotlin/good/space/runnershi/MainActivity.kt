@@ -84,9 +84,12 @@ class MainActivity : ComponentActivity() {
         // 2. DB 및 ServiceController 준비
         val dbSource = LocalRunningDataSource(this)
         
-        // 3. 로그아웃 시 DB 데이터 삭제 콜백 설정
+        // 3. 로그아웃 시 DB 데이터 삭제 및 서비스 중지 콜백 설정
         mainViewModel.onLogoutCallback = {
-            dbSource.discardRun() // 미완료 러닝 데이터 삭제
+            // 1. 서비스를 먼저 중지 (위치 추적 및 DB 저장 중단)
+            serviceController.stopService()
+            // 2. 미완료 러닝 데이터 삭제
+            dbSource.discardRun()
         }
 
         setContent {
