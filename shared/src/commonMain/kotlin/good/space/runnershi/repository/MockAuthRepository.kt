@@ -1,8 +1,8 @@
 package good.space.runnershi.repository
 
-import good.space.runnershi.model.dto.LoginRequest
-import good.space.runnershi.model.dto.LoginResponse
-import good.space.runnershi.model.dto.SignUpRequest
+import good.space.runnershi.model.dto.auth.LoginRequest
+import good.space.runnershi.model.dto.auth.LoginResponse
+import good.space.runnershi.model.dto.auth.SignUpRequest
 import kotlinx.coroutines.delay
 
 class MockAuthRepository : AuthRepository {
@@ -14,7 +14,7 @@ class MockAuthRepository : AuthRepository {
 
     override suspend fun signUp(request: SignUpRequest): Result<LoginResponse> {
         delay(1500) // 회원가입은 좀 더 오래 걸리는 척
-        println("📡 [Mock Server] User Created: ${request.email} / ${request.nickname}")
+        println("📡 [Mock Server] User Created: ${request.email} / ${request.name}")
         return Result.success(
             LoginResponse(
                 accessToken = "mock_access_token_signup",

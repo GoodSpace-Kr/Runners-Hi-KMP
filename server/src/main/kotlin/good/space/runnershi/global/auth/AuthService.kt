@@ -1,6 +1,10 @@
 package good.space.runnershi.global.auth
 
 import good.space.runnershi.global.security.JwtPlugin
+import good.space.runnershi.model.dto.auth.LoginRequest
+import good.space.runnershi.model.dto.auth.SignUpRequest
+import good.space.runnershi.model.dto.auth.TokenRefreshResponse
+import good.space.runnershi.model.dto.auth.TokenResponse
 import good.space.runnershi.user.domain.LocalUser
 import good.space.runnershi.user.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -16,7 +20,7 @@ class AuthService(
 ) {
 
     @Transactional
-    fun signUp(request: SignupRequest) {
+    fun signUp(request: SignUpRequest) {
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(request.email)) {
             throw IllegalArgumentException("이미 사용 중인 이메일입니다.")
@@ -80,7 +84,7 @@ class AuthService(
     }
 
     @Transactional
-    fun refreshAccessToken(refreshToken: String): TokenResponse {
+    fun refreshAccessToken(refreshToken: String): TokenRefreshResponse {
         // 1. Refresh Token 검증
         val verifiedToken = jwtPlugin.validateToken(refreshToken)
             .getOrElse { throw IllegalArgumentException("유효하지 않은 Refresh Token입니다.") }
@@ -105,7 +109,6 @@ class AuthService(
             role = user.userType.name
         )
 
-        // Refresh Token은 그대로 유지 (Rotation을 적용하려면 여기서 새로 발급해서 업데이트)
-        return TokenResponse(accessToken = newAccessToken, refreshToken = refreshToken)
+        return TokenRefreshResponse(newAccessToken)
     }
 }

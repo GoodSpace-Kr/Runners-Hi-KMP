@@ -1,8 +1,8 @@
 package good.space.runnershi.repository
 
-import good.space.runnershi.model.dto.LoginRequest
-import good.space.runnershi.model.dto.LoginResponse
-import good.space.runnershi.model.dto.SignUpRequest
+import good.space.runnershi.model.dto.auth.LoginRequest
+import good.space.runnershi.model.dto.auth.LoginResponse
+import good.space.runnershi.model.dto.auth.SignUpRequest
 
 interface AuthRepository {
     suspend fun login(request: LoginRequest): Result<LoginResponse>
