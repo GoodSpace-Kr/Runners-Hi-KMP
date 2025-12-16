@@ -41,7 +41,7 @@ class JwtAuthenticationFilter(
                     // 5. 인증 객체(Authentication) 만들기
                     // Principal(신원): 보통 UserDetails 객체를 넣지만, 가볍게 userId나 email을 넣기도 함
                     val authentication = UsernamePasswordAuthenticationToken(
-                        userId, // 나중에 Controller에서 @AuthenticationPrincipal로 꺼낼 값
+                        userId.toLong(), // 나중에 Controller에서 @AuthenticationPrincipal로 꺼낼 값
                         null,   // 비밀번호는 이미 인증됐으니 null
                         authorities
                     )
