@@ -19,6 +19,8 @@ class MainViewModel(
     private val tokenStorage: TokenStorage,
     private val apiClient: ApiClient
 ) {
+    // 로그아웃 시 DB 데이터 삭제를 위한 콜백
+    var onLogoutCallback: (suspend () -> Unit)? = null
     private val scope = CoroutineScope(Dispatchers.Main)
 
     private val _appState = MutableStateFlow<AppState>(AppState.Loading)
@@ -57,8 +59,20 @@ class MainViewModel(
     
     // 로그아웃 처리
     suspend fun logout() {
+        // 1. Room DB의 러닝 데이터 삭제 (로그아웃 시 모든 미완료 데이터 제거)
+        onLogoutCallback?.invoke()
+        
+        // 2. 토큰 삭제를 먼저 완료한 후 상태 변경
         tokenStorage.clearTokens()
-        _appState.value = AppState.NeedsLogin
+        // 토큰이 정말 삭제되었는지 확인
+        val token = tokenStorage.getAccessToken()
+        if (token.isNullOrEmpty()) {
+            _appState.value = AppState.NeedsLogin
+        } else {
+            // 토큰이 아직 남아있다면 다시 삭제 시도
+            tokenStorage.clearTokens()
+            _appState.value = AppState.NeedsLogin
+        }
     }
 }
 

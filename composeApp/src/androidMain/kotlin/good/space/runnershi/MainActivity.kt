@@ -83,20 +83,21 @@ class MainActivity : ComponentActivity() {
         
         // 2. DB 및 ServiceController 준비
         val dbSource = LocalRunningDataSource(this)
+        
+        // 3. 로그아웃 시 DB 데이터 삭제 콜백 설정
+        mainViewModel.onLogoutCallback = {
+            dbSource.discardRun() // 미완료 러닝 데이터 삭제
+        }
 
         setContent {
             MaterialTheme {
-                RecoveryDialogWrapper(
+                AppRoot(
+                    mainViewModel = mainViewModel,
+                    loginViewModel = loginViewModel,
+                    signUpViewModel = signUpViewModel,
+                    runningViewModel = runningViewModel,
                     dbSource = dbSource,
-                    serviceController = serviceController,
-                    content = {
-                        AppRoot(
-                            mainViewModel = mainViewModel,
-                            loginViewModel = loginViewModel,
-                            signUpViewModel = signUpViewModel,
-                            runningViewModel = runningViewModel
-                        )
-                    }
+                    serviceController = serviceController
                 )
             }
         }
@@ -184,7 +185,9 @@ fun AppRoot(
     mainViewModel: MainViewModel,
     loginViewModel: LoginViewModel,
     signUpViewModel: SignUpViewModel,
-    runningViewModel: RunningViewModel
+    runningViewModel: RunningViewModel,
+    dbSource: LocalRunningDataSource,
+    serviceController: AndroidServiceController
 ) {
     val appState by mainViewModel.appState.collectAsState()
 
@@ -193,6 +196,13 @@ fun AppRoot(
             CircularProgressIndicator()
         }
         is AppState.NeedsLogin -> {
+            // 로그아웃 후 로그인 화면으로 돌아왔을 때 ViewModel 상태 리셋
+            LaunchedEffect(appState) {
+                if (appState is AppState.NeedsLogin) {
+                    loginViewModel.resetLoginSuccess()
+                    signUpViewModel.resetSignUpSuccess()
+                }
+            }
             AuthFlow(
                 loginViewModel = loginViewModel,
                 signUpViewModel = signUpViewModel,
@@ -200,7 +210,14 @@ fun AppRoot(
             )
         }
         is AppState.LoggedIn -> {
-            AppContent(runningViewModel, mainViewModel)
+            // 로그인 후에만 복구 다이얼로그 표시
+            RecoveryDialogWrapper(
+                dbSource = dbSource,
+                serviceController = serviceController,
+                content = {
+                    AppContent(runningViewModel, mainViewModel)
+                }
+            )
         }
         else -> {
             CircularProgressIndicator()
