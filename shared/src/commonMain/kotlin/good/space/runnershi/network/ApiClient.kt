@@ -1,8 +1,8 @@
 package good.space.runnershi.network
 
 import good.space.runnershi.auth.TokenStorage
-import good.space.runnershi.model.dto.RefreshTokenRequest
-import good.space.runnershi.model.dto.TokenResponse
+import good.space.runnershi.model.dto.auth.TokenRefreshRequest
+import good.space.runnershi.model.dto.auth.TokenResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.auth.*
@@ -63,7 +63,7 @@ class ApiClient(
                         tokenStorage.saveTokens(newTokens.accessToken, newTokens.refreshToken)
                         BearerTokens(newTokens.accessToken, newTokens.refreshToken)
                         
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // 4. [갱신 실패] -> 로그아웃 처리
                         tokenStorage.clearTokens()
                         _authErrorFlow.emit(Unit) // UI에 "로그인 화면으로 이동해"라고 알림
@@ -86,7 +86,7 @@ class ApiClient(
         }
         
         val response = refreshClient.post("$baseUrl/auth/refresh") {
-            setBody(RefreshTokenRequest(refreshToken))
+            setBody(TokenRefreshRequest(refreshToken))
             contentType(ContentType.Application.Json)
         }
         

@@ -1,7 +1,7 @@
 package good.space.runnershi.viewmodel
 
 import good.space.runnershi.auth.TokenStorage
-import good.space.runnershi.model.dto.SignUpRequest
+import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.repository.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

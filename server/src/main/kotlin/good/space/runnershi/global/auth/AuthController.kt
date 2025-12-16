@@ -1,8 +1,12 @@
 package good.space.runnershi.global.auth
 
+import good.space.runnershi.model.dto.auth.LoginRequest
+import good.space.runnershi.model.dto.auth.SignUpRequest
+import good.space.runnershi.model.dto.auth.TokenRefreshRequest
+import good.space.runnershi.model.dto.auth.TokenRefreshResponse
+import good.space.runnershi.model.dto.auth.TokenResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,7 +20,7 @@ class AuthController(
 
     // 회원가입 API
     @PostMapping("/signup")
-    fun signUp(@RequestBody request: SignupRequest): ResponseEntity<String> {
+    fun signUp(@RequestBody request: SignUpRequest): ResponseEntity<String> {
         authService.signUp(request)
         return ResponseEntity
             .status(HttpStatus.CREATED) // 201 Created
@@ -33,7 +37,7 @@ class AuthController(
     // 토큰 갱신 API
     // RequestBody로 refreshToken 문자열 하나만 받거나, DTO를 만들어 받아도 됩니다.
     @PostMapping("/refresh")
-    fun refresh(@RequestBody request: RefreshTokenRequest): ResponseEntity<TokenResponse> {
+    fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<TokenRefreshResponse> {
         val token = authService.refreshAccessToken(request.refreshToken)
         return ResponseEntity.ok(token)
     }
