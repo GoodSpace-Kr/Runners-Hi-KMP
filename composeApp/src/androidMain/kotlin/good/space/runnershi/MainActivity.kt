@@ -4,20 +4,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.lifecycleScope
 import good.space.runnershi.auth.AndroidTokenStorage
 import good.space.runnershi.database.LocalRunningDataSource
 import good.space.runnershi.network.ApiClient
-import good.space.runnershi.repository.MockAuthRepository
+import good.space.runnershi.repository.AuthRepositoryImpl
 import good.space.runnershi.service.AndroidServiceController
 import good.space.runnershi.shared.di.androidPlatformModule
 import good.space.runnershi.shared.di.initKoin
@@ -30,23 +38,42 @@ import good.space.runnershi.viewmodel.LoginViewModel
 import good.space.runnershi.viewmodel.MainViewModel
 import good.space.runnershi.viewmodel.RunningViewModel
 import good.space.runnershi.viewmodel.SignUpViewModel
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Koin이 이미 시작되어 있다면 재시작하지 않음 (브랜치 전환 후 pull 등)
         if (GlobalContext.getOrNull() == null) {
-            initKoin(extraModules = listOf(androidPlatformModule))
+        initKoin(extraModules = listOf(androidPlatformModule))
         }
         
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // 1. 의존성 주입 (수동)
+        // 1. BuildConfig에서 BASE_URL 읽기 (Gradle에서 local.properties 값을 주입)
+        val baseUrl = BuildConfig.BASE_URL
+
+        // 2. 의존성 주입 (수동)
         val tokenStorage = AndroidTokenStorage(this)
-        val authRepository = MockAuthRepository() // 서버 준비 전 Mock 사용
-        val apiClient = ApiClient(tokenStorage)
+        
+        // 3. AuthRepository용 HttpClient 생성 (인증 없이 사용)
+        val authHttpClient = HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    ignoreUnknownKeys = true
+                })
+            }
+        }
+        val authRepository = AuthRepositoryImpl(authHttpClient, baseUrl)
+        
+        // 4. ApiClient 생성 (인증 플러그인 포함)
+        val apiClient = ApiClient(tokenStorage, baseUrl)
         val serviceController = AndroidServiceController(this)
 
         val runningViewModel = RunningViewModel(serviceController)
@@ -54,26 +81,99 @@ class MainActivity : ComponentActivity() {
         val loginViewModel = LoginViewModel(authRepository, tokenStorage)
         val signUpViewModel = SignUpViewModel(authRepository, tokenStorage)
         
-        // 2. 앱 시작 시 복구 로직 실행 (사용자가 앱 아이콘을 눌러서 켤 때)
+        // 2. DB 및 ServiceController 준비
         val dbSource = LocalRunningDataSource(this)
-        lifecycleScope.launch {
-            if (dbSource.recoverLastRunIfAny()) {
-                // 복구되었다면, '일시정지' 상태로 UI가 그려질 것임.
-                // 사용자에게 스낵바나 다이얼로그로 "이전 기록을 불러왔습니다" 라고 알려주면 Best.
-            }
-        }
 
         setContent {
             MaterialTheme {
-                AppRoot(
-                    mainViewModel = mainViewModel,
-                    loginViewModel = loginViewModel,
-                    signUpViewModel = signUpViewModel,
-                    runningViewModel = runningViewModel
+                RecoveryDialogWrapper(
+                    dbSource = dbSource,
+                    serviceController = serviceController,
+                    content = {
+                        AppRoot(
+                            mainViewModel = mainViewModel,
+                            loginViewModel = loginViewModel,
+                            signUpViewModel = signUpViewModel,
+                            runningViewModel = runningViewModel
+                        )
+                    }
                 )
             }
         }
     }
+}
+
+// 복구 다이얼로그 래퍼
+@Composable
+fun RecoveryDialogWrapper(
+    dbSource: LocalRunningDataSource,
+    serviceController: AndroidServiceController,
+    content: @Composable () -> Unit
+) {
+    var showRecoveryDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // 앱 시작 시 1회 체크
+    LaunchedEffect(Unit) {
+        if (dbSource.hasUnfinishedRun()) {
+            showRecoveryDialog = true
+        }
+    }
+
+    // 복구 다이얼로그
+    if (showRecoveryDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // 다이얼로그 바깥 터치 시 '아니요'와 동일하게 처리
+                scope.launch {
+                    dbSource.discardRun()
+                    showRecoveryDialog = false
+                }
+            },
+            icon = { 
+                Icon(
+                    imageVector = Icons.Default.Restore,
+                    contentDescription = null
+                ) 
+            },
+            title = { Text("비정상 종료 감지") },
+            text = { Text("이전 러닝 기록이 남아있습니다. 이어서 달리시겠습니까?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            // 1. 데이터 복구 (메모리로 로드)
+                            val success = dbSource.restoreRun()
+                            if (success) {
+                                // 2. 서비스 재시작 (알림 표시 & 상태 유지)
+                                // 주의: RESUME 액션을 보내야 함
+                                serviceController.resumeService()
+                            }
+                            showRecoveryDialog = false
+                        }
+                    }
+                ) {
+                    Text("네, 이어서 할게요")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            // 1. 데이터 영구 삭제
+                            dbSource.discardRun()
+                            showRecoveryDialog = false
+                        }
+                    }
+                ) {
+                    Text("아니요, 새로 할게요", color = Color.Red)
+                }
+            }
+        )
+    }
+
+    // 메인 화면
+    content()
 }
 
 // 간단한 네비게이션 상태 정의
@@ -100,7 +200,7 @@ fun AppRoot(
             )
         }
         is AppState.LoggedIn -> {
-            AppContent(runningViewModel)
+            AppContent(runningViewModel, mainViewModel)
         }
         else -> {
             CircularProgressIndicator()
@@ -135,7 +235,10 @@ fun AuthFlow(
 }
 
 @Composable
-fun AppContent(viewModel: RunningViewModel) {
+fun AppContent(
+    viewModel: RunningViewModel,
+    mainViewModel: MainViewModel
+) {
     val runResult by viewModel.runResult.collectAsState()
 
     if (runResult != null) {
@@ -144,7 +247,10 @@ fun AppContent(viewModel: RunningViewModel) {
             onClose = { viewModel.closeResultScreen() }
         )
     } else {
-        RunningScreen(viewModel = viewModel)
+        RunningScreen(
+            viewModel = viewModel,
+            mainViewModel = mainViewModel
+        )
     }
 }
 

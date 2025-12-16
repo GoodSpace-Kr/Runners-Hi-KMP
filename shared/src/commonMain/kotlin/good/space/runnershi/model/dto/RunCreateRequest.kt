@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RunCreateRequest(
     // [Header] 러닝 요약 정보
-    val title: String,
     val distanceMeters: Double,
     val durationSeconds: Long,
     val startedAt: String, // ISO-8601 형식 (예: "2024-05-20T07:00:00Z")
