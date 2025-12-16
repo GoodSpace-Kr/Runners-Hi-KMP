@@ -11,10 +11,11 @@ data class LoginResponse(
 @Serializable
 data class TokenResponse(
     val accessToken: String,
-    val refreshToken: String
+    val refreshToken: String?
 )
 
 @Serializable
 data class TokenRefreshResponse(
-    val accessToken: String
+    val accessToken: String,
+    val refreshToken: String?
 )

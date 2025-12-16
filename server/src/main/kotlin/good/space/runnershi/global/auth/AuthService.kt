@@ -109,6 +109,6 @@ class AuthService(
             role = user.userType.name
         )
 
-        return TokenRefreshResponse(newAccessToken)
+        return TokenRefreshResponse(newAccessToken, refreshToken)
     }
 }

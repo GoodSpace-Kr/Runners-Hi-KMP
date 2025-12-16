@@ -29,7 +29,7 @@ class AndroidTokenStorage(
         private const val KEY_REFRESH_TOKEN = "refresh_token"
     }
     
-    override suspend fun saveTokens(accessToken: String, refreshToken: String) = withContext(Dispatchers.IO) {
+    override suspend fun saveTokens(accessToken: String, refreshToken: String?) = withContext(Dispatchers.IO) {
         sharedPreferences.edit {
             putString(KEY_ACCESS_TOKEN, accessToken)
                 .putString(KEY_REFRESH_TOKEN, refreshToken)

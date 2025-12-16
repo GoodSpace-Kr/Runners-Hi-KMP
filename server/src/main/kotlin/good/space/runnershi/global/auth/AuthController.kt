@@ -5,8 +5,11 @@ import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.model.dto.auth.TokenRefreshRequest
 import good.space.runnershi.model.dto.auth.TokenRefreshResponse
 import good.space.runnershi.model.dto.auth.TokenResponse
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -40,6 +43,52 @@ class AuthController(
     fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<TokenRefreshResponse> {
         val token = authService.refreshAccessToken(request.refreshToken)
         return ResponseEntity.ok(token)
+    }
+
+    @PostMapping("/login/web")
+    fun loginWeb(@RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
+        val originalToken = authService.login(request)
+
+        val cookie = createRefreshTokenCookie(originalToken.refreshToken ?: "")
+
+        val secureTokenResponse = originalToken.copy(refreshToken = null)
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString()) // ⭐️ 헤더에 쿠키 심기
+            .body(secureTokenResponse) // Body에는 AccessToken만 있음
+    }
+
+    @PostMapping("/refresh/web")
+    fun refreshWeb( @CookieValue("refreshToken") refreshToken: String
+    ): ResponseEntity<TokenRefreshResponse> {
+        val newTokenResponse = authService.refreshAccessToken(refreshToken)
+
+        val cookie = createRefreshTokenCookie(newTokenResponse.refreshToken)
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString()) // ⭐️ 갱신된 쿠키 다시 심기
+            .body(newTokenResponse)
+    }
+
+
+    private fun createRefreshTokenCookie(refreshToken: String?): ResponseCookie {
+        if (refreshToken.isNullOrBlank()) {
+            return ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) //핵심: 수명을 0으로 설정하면 브라우저가 즉시 삭제함
+                .sameSite("Strict")
+                .build()
+        }
+
+        return ResponseCookie.from("refreshToken", refreshToken)
+            .httpOnly(true)    // ⭐️ JS 접근 불가 (XSS 방지)
+            .secure(false)     // ⭐️ 로컬 개발은 false, 배포(HTTPS) 시 true로 변경!
+            .path("/")         // 모든 경로에서 유효
+            .maxAge(14 * 24 * 60 * 60) // 14일 (초 단위)
+            .sameSite("Strict") // CSRF 방지 (프론트/백 도메인 다르면 "None" 고려)
+            .build()
     }
 
 }
