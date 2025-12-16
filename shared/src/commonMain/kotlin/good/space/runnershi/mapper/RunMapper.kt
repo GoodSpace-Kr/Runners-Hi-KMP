@@ -26,12 +26,9 @@ object RunMapper {
         }
 
         return RunCreateRequestDto(
-            title = "Morning Run", // 추후 사용자 입력 받거나 로직 추가 가능
             distanceMeters = domain.totalDistanceMeters,
             durationSeconds = domain.durationSeconds,
             startedAt = TimeConverter.toIso8601(domain.startedAt), // Long -> ISO String
-            // paceSeconds 계산 로직 삭제 -> 서버에서 계산
-            
             locations = flatLocations
         )
     }
