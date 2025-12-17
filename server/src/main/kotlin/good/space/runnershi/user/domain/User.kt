@@ -33,6 +33,5 @@ abstract class User(
     fun increaseExp(amount: Long) {
         this.exp += amount
     }
-
 }
 
