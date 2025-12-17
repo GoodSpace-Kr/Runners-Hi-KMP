@@ -32,6 +32,10 @@ interface RunningDao {
     // [복구용] 아직 안 끝난(isFinished=false) 최신 세션 가져오기
     @Query("SELECT * FROM run_sessions WHERE isFinished = 0 ORDER BY startTime DESC LIMIT 1")
     suspend fun getUnfinishedSession(): RunSessionEntity?
+    
+    // [삭제용] 최신 세션 가져오기 (완료 여부 무관)
+    @Query("SELECT * FROM run_sessions ORDER BY startTime DESC LIMIT 1")
+    suspend fun getLatestSession(): RunSessionEntity?
 
     // [복구용] 특정 세션의 모든 좌표 가져오기 (시간순 정렬)
     @Query("SELECT * FROM location_points WHERE runSessionId = :runId ORDER BY timestamp ASC")
@@ -40,6 +44,10 @@ interface RunningDao {
     // [폐기용] 세션 삭제 (CASCADE로 좌표도 자동 삭제됨)
     @Query("DELETE FROM run_sessions WHERE runId = :runId")
     suspend fun deleteSessionById(runId: String)
+    
+    // [로그아웃용] 모든 세션 삭제 (완료된 것 포함, CASCADE로 좌표도 자동 삭제됨)
+    @Query("DELETE FROM run_sessions")
+    suspend fun deleteAllSessions()
 }
 
 @Database(entities = [RunSessionEntity::class, LocationEntity::class], version = 2)

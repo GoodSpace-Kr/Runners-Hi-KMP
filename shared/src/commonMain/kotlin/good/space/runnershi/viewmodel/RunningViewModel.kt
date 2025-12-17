@@ -6,18 +6,24 @@ import good.space.runnershi.repository.RunRepository
 import good.space.runnershi.service.ServiceController
 import good.space.runnershi.state.RunningStateManager
 import good.space.runnershi.util.format
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 class RunningViewModel(
     private val serviceController: ServiceController,
     private val runRepository: RunRepository
 ) {
     private val scope = CoroutineScope(Dispatchers.Main)
+    
+    // 러닝 종료 시 RoomDB 초기화를 위한 콜백 (Android에서 주입)
+    var onFinishCallback: (suspend () -> Unit)? = null
     
     // 데이터는 StateManager에서 직접 구독
     val currentLocation: StateFlow<good.space.runnershi.model.domain.LocationModel?> = RunningStateManager.currentLocation
@@ -33,6 +39,10 @@ class RunningViewModel(
     // 최대 기록 (Personal Best)
     private val _personalBest = MutableStateFlow<PersonalBestResponse?>(null)
     val personalBest: StateFlow<PersonalBestResponse?> = _personalBest.asStateFlow()
+    
+    // 업로드 상태 관리
+    private val _uploadState = MutableStateFlow(UploadState.IDLE)
+    val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
     
     init {
         // 앱 시작 시 최대 기록 조회
@@ -69,34 +79,78 @@ class RunningViewModel(
         serviceController.stopService()
     }
     
-    // 러닝 종료 버튼을 눌렀을 때 호출
+    // 러닝 종료 (통합된 함수)
     fun finishRun() {
-        // 1. 현재 상태를 스냅샷으로 저장 (데이터 캡처)
+        // 1. 현재 상태 캡처
         val result = createRunResultSnapshot()
-        
-        // 2. 서비스 및 위치 추적 완전 종료
+
+        // 2. 서비스 종료 및 초기화 (무조건 실행)
         serviceController.stopService()
-        
-        // 3. 상태 매니저 초기화 (다음 러닝을 위해)
         RunningStateManager.reset()
 
-        // 4. 결과 화면에 데이터 전달 (UI 전환 트리거)
+        // 3. 결과 화면으로 이동 (무조건 실행)
+        // 기록이 짧든 길든 사용자는 "완료 화면"을 보게 됩니다.
         _runResult.value = result
 
-        // 5. (비동기) 서버로 데이터 전송
-        uploadRunData(result)
+        // 4. 업로드 상태 초기화 (재진입 고려)
+        _uploadState.value = UploadState.IDLE
+
+        // 5. 서버 전송 여부 판단 (백그라운드 처리)
+        if (shouldUploadToServer(result)) {
+            // 조건 충족: 서버에 저장
+            uploadRunData(result)
+        } else {
+            // 조건 미달: 서버 전송 안 함 (로그만 남김)
+            // 사용자는 결과 화면을 보고 있지만, 이 데이터는 서버에 남지 않습니다.
+            println("⚠️ 기록 미달로 서버 저장 건너뜀 (거리: ${result.totalDistanceMeters}m, 시간: ${result.duration.inWholeSeconds}초)")
+            // RoomDB 데이터 삭제 (쓰레기 데이터 방지)
+            scope.launch {
+                onFinishCallback?.invoke()
+            }
+        }
+    }
+    
+    // 서버 전송 조건 검사
+    private fun shouldUploadToServer(result: RunResult): Boolean {
+        return result.totalDistanceMeters >= 300.0 && result.duration.inWholeSeconds >= 180
     }
 
     private fun createRunResultSnapshot(): RunResult {
         val distance = RunningStateManager.totalDistanceMeters.value
-        val seconds = RunningStateManager.durationSeconds.value
+        val durationSeconds = RunningStateManager.durationSeconds.value
+        val startTime = RunningStateManager.startTime.value
+        val finishedAt = Clock.System.now()
+        
+        // duration: 실제 러닝 시간 (PAUSE 시간 제외)
+        val duration = durationSeconds.toDuration(DurationUnit.SECONDS)
+        
+        // totalTime: 휴식시간을 포함한 총 시간 (시작부터 종료까지)
+        val totalTime = if (startTime != null) {
+            val calculated = finishedAt - startTime
+            // 방어 로직: 음수나 0이면 duration을 사용 (최소한의 값 보장)
+            if (calculated.isPositive()) calculated else duration
+        } else {
+            // startTime이 null인 경우 (비정상 상황, 방어 코드)
+            println("⚠️ [RunningViewModel] startTime이 null입니다. duration을 사용합니다.")
+            duration
+        }
+        
+        // 추가 검증: totalTime이 duration보다 작으면 duration 사용
+        val finalTotalTime = if (totalTime >= duration) {
+            totalTime
+        } else {
+            println("⚠️ [RunningViewModel] totalTime($totalTime) < duration($duration). duration을 사용합니다.")
+            duration
+        }
         
         return RunResult(
             totalDistanceMeters = distance,
-            durationSeconds = seconds,
+            duration = duration,
+            totalTime = finalTotalTime,
             pathSegments = RunningStateManager.pathSegments.value,
             calories = (distance * 0.06).toInt(), // 단순 예시 계산
-            avgPace = calculatePace(distance, seconds)
+            startedAt = startTime ?: finishedAt, // null이면 현재 시간 사용
+            avgPace = calculatePace(distance, durationSeconds)
         )
     }
     
@@ -110,14 +164,20 @@ class RunningViewModel(
 
     private fun uploadRunData(result: RunResult) {
         scope.launch {
+            _uploadState.value = UploadState.UPLOADING // 로딩 시작
+            
             runRepository.saveRun(result)
                 .onSuccess { serverId ->
+                    _uploadState.value = UploadState.SUCCESS // 성공!
                     println("✅ Upload Success: ID=$serverId")
-                    // 필요하다면 여기서 로컬 DB에 '동기화 완료' 마킹
+                    // 서버 저장 성공 시 RoomDB 데이터 삭제 (이미 서버에 저장됨)
+                    onFinishCallback?.invoke()
                 }
                 .onFailure { e ->
+                    _uploadState.value = UploadState.FAILURE // 실패...
                     println("❌ Upload Failed: ${e.message}")
                     // 실패 시 로컬 DB에 저장해두고 나중에 재전송 로직 필요
+                    // TODO: 실패 시 RoomDB 데이터는 유지 (재전송을 위해)
                 }
         }
     }

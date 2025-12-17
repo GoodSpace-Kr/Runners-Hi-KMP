@@ -1,5 +1,10 @@
 package good.space.runnershi
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import good.space.runnershi.auth.AndroidTokenStorage
 import good.space.runnershi.database.LocalRunningDataSource
@@ -28,8 +35,10 @@ import good.space.runnershi.network.ApiClient
 import good.space.runnershi.repository.AuthRepositoryImpl
 import good.space.runnershi.repository.MockRunRepository
 import good.space.runnershi.service.AndroidServiceController
+import good.space.runnershi.service.RunningService
 import good.space.runnershi.shared.di.androidPlatformModule
 import good.space.runnershi.shared.di.initKoin
+import good.space.runnershi.ui.component.VehicleDetectedDialog
 import good.space.runnershi.ui.screen.LoginScreen
 import good.space.runnershi.ui.screen.RunResultScreen
 import good.space.runnershi.ui.screen.RunningScreen
@@ -71,29 +80,38 @@ class MainActivity : ComponentActivity() {
                 })
             }
         }
-        val authRepository = AuthRepositoryImpl(authHttpClient, baseUrl)
         
         // 4. ApiClient 생성 (인증 플러그인 포함)
         val apiClient = ApiClient(tokenStorage, baseUrl)
+        
+        // 5. AuthRepository 생성 (로그아웃은 인증이 필요하므로 apiClient.httpClient 사용)
+        val authRepository = AuthRepositoryImpl(authHttpClient, baseUrl, apiClient.httpClient)
         val serviceController = AndroidServiceController(this)
 
         // 5. RunRepository 생성
         // TODO: 서버 API가 준비되면 RunRepositoryImpl(apiClient)로 변경
         val runRepository = MockRunRepository() // 테스트용 Mock 데이터 사용
         val runningViewModel = RunningViewModel(serviceController, runRepository)
-        val mainViewModel = MainViewModel(tokenStorage, apiClient)
+        val mainViewModel = MainViewModel(tokenStorage, apiClient, authRepository)
         val loginViewModel = LoginViewModel(authRepository, tokenStorage)
         val signUpViewModel = SignUpViewModel(authRepository, tokenStorage)
         
         // 2. DB 및 ServiceController 준비
         val dbSource = LocalRunningDataSource(this)
         
-        // 3. 로그아웃 시 DB 데이터 삭제 및 서비스 중지 콜백 설정
+        // 3. 러닝 종료 시 RoomDB 초기화 콜백 설정
+        runningViewModel.onFinishCallback = {
+            // 서버 저장 성공 또는 기록 미달 시 RoomDB 데이터 삭제
+            dbSource.discardRun()
+        }
+        
+        // 4. 로그아웃 시 DB 데이터 삭제 및 서비스 중지 콜백 설정
         mainViewModel.onLogoutCallback = {
             // 1. 서비스를 먼저 중지 (위치 추적 및 DB 저장 중단)
             serviceController.stopService()
-            // 2. 미완료 러닝 데이터 삭제
-            dbSource.discardRun()
+            // 2. 미완료 러닝 데이터 삭제 (완료된 세션 포함하여 모든 세션 삭제)
+            // 주의: stopService()가 finishRun()을 호출하므로, 완료된 세션도 삭제해야 함
+            dbSource.discardAllRuns()
         }
 
         setContent {
@@ -222,7 +240,7 @@ fun AppRoot(
                 dbSource = dbSource,
                 serviceController = serviceController,
                 content = {
-                    AppContent(runningViewModel, mainViewModel)
+                    AppContent(runningViewModel, mainViewModel, serviceController)
                 }
             )
         }
@@ -261,20 +279,82 @@ fun AuthFlow(
 @Composable
 fun AppContent(
     viewModel: RunningViewModel,
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    serviceController: AndroidServiceController // 서비스 제어를 위해 필요
 ) {
     val runResult by viewModel.runResult.collectAsState()
+    // 업로드 상태 구독
+    val uploadState by viewModel.uploadState.collectAsState()
+    
+    // 다이얼로그 상태 관리
+    var showVehicleDialog by remember { mutableStateOf(false) }
+    
+    // 브로드캐스트 수신 시 다이얼로그 ON
+    OverSpeedObserver(
+        onOverSpeedDetected = {
+            showVehicleDialog = true
+        }
+    )
+
+    // 다이얼로그 표시 (최상위 레벨)
+    if (showVehicleDialog) {
+        VehicleDetectedDialog(
+            onDismiss = { showVehicleDialog = false },
+            onResumeRun = {
+                serviceController.resumeService()
+                showVehicleDialog = false
+            }
+        )
+    }
 
     if (runResult != null) {
         RunResultScreen(
             result = runResult!!,
+            uploadState = uploadState,
             onClose = { viewModel.closeResultScreen() }
         )
     } else {
         RunningScreen(
             viewModel = viewModel,
-            mainViewModel = mainViewModel
+            mainViewModel = mainViewModel,
+            serviceController = serviceController
         )
+    }
+}
+
+/**
+ * 과속 감지 이벤트를 수신하여 사용자에게 알림을 표시하는 Composable
+ */
+@Composable
+fun OverSpeedObserver(
+    onOverSpeedDetected: () -> Unit
+) {
+    val context = LocalContext.current
+    
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == RunningService.ACTION_OVER_SPEED_DETECTED) {
+                    // 토스트 대신 콜백 호출 -> 다이얼로그 트리거
+                    onOverSpeedDetected()
+                }
+            }
+        }
+        
+        val filter = IntentFilter(RunningService.ACTION_OVER_SPEED_DETECTED)
+        
+        // Android 13+ 호환성 플래그 (하위 호환성을 위해 모든 버전에서 플래그 사용)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            // Android 13 미만에서는 플래그가 없어도 되지만, 명시적으로 추가하여 경고 방지
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, filter)
+        }
+
+        onDispose {
+            context.unregisterReceiver(receiver)
+        }
     }
 }
 
