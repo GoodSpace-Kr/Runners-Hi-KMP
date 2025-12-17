@@ -25,7 +25,7 @@ class RunningController (
     ): ResponseEntity<Long> {
         val runId = runningService.createRunning(userId, runCreateRequest)
 
-        runningService.updateUser(userId, runCreateRequest.distanceMeters.toLong())
+        runningService.updateUserByRunnig(userId, runCreateRequest)
 
         return ResponseEntity.ok(runId)
     }
