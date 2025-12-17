@@ -13,7 +13,14 @@ class LocalRunningDataSource(context: Context) {
     private var currentSegmentIndex: Int = 0
 
     // 1. 러닝 시작 (DB 세션 생성)
-    suspend fun startRun() {
+    suspend fun startRun() = withContext(Dispatchers.IO) {
+        // 기존 세션이 있으면 삭제 (새로운 러닝 시작 전 정리)
+        val existingSession = dao.getUnfinishedSession()
+        if (existingSession != null) {
+            // 기존 미완료 세션 삭제
+            dao.deleteSessionById(existingSession.runId)
+        }
+        
         val runId = UUID.randomUUID().toString()
         currentRunId = runId
         currentSegmentIndex = 0
