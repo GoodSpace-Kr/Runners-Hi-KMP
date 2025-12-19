@@ -170,8 +170,8 @@ class RunningViewModel(
             totalTime = finalTotalTime,
             pathSegments = RunningStateManager.pathSegments.value,
             calories = (distance * 0.06).toInt(), // 단순 예시 계산
-            startedAt = startTime ?: finishedAt, // null이면 현재 시간 사용
-            avgPace = calculatePace(distance, durationSeconds)
+            startedAt = startTime ?: finishedAt // null이면 현재 시간 사용
+            // movingPace와 elapsedPace는 RunResult 모델에서 자동 계산됨
         )
     }
     
