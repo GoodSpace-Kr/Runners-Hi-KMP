@@ -52,6 +52,9 @@ fun RunningScreen(
     val personalBest by viewModel.personalBest.collectAsState() // 최대 기록
     val pauseType by viewModel.pauseType.collectAsState()
     
+    // [New] 페이스 상태 구독
+    val currentPace by viewModel.currentPace.collectAsState()
+    
     // [New] 차량 경고 횟수 구독
     val vehicleWarningCount by viewModel.vehicleWarningCount.collectAsState()
     
@@ -206,6 +209,7 @@ fun RunningScreen(
             isRunning = isRunning,
             durationSeconds = durationSeconds,
             totalDistance = totalDistance,
+            currentPace = currentPace,
             onStartResume = { viewModel.startRun() },
             onPause = { viewModel.pauseRun() },
             onFinish = { viewModel.finishRun() }
@@ -335,6 +339,7 @@ fun RunControlPanel(
     isRunning: Boolean,
     durationSeconds: Long,
     totalDistance: Double,
+    currentPace: String,
     onStartResume: () -> Unit,
     onPause: () -> Unit,
     onFinish: () -> Unit
@@ -347,14 +352,19 @@ fun RunControlPanel(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 타이머 & 거리 정보
+        // [Mod] 타이머 & 페이스 & 거리 정보 (3열 배치로 변경)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly // 균등 배치
         ) {
             RunStatItem(
                 label = "TIME",
                 value = TimeFormatter.formatSecondsToTime(durationSeconds)
+            )
+            // [New] 가운데에 PACE 추가
+            RunStatItem(
+                label = "PACE",
+                value = currentPace
             )
             RunStatItem(
                 label = "DISTANCE",

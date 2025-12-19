@@ -7,6 +7,7 @@ import good.space.runnershi.repository.RunRepository
 import good.space.runnershi.service.ServiceController
 import good.space.runnershi.state.PauseType
 import good.space.runnershi.state.RunningStateManager
+import good.space.runnershi.model.domain.running.PaceCalculator
 import good.space.runnershi.util.format
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -15,6 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
@@ -35,6 +39,19 @@ class RunningViewModel(
     val isRunning: StateFlow<Boolean> = RunningStateManager.isRunning
     val pauseType: StateFlow<PauseType> = RunningStateManager.pauseType
     val vehicleWarningCount: StateFlow<Int> = RunningStateManager.vehicleWarningCount
+
+    // [New] 실시간 페이스 계산 (StateFlow)
+    // 거리나 시간이 업데이트될 때마다 자동으로 페이스를 다시 계산합니다.
+    val currentPace: StateFlow<String> = combine(
+        totalDistanceMeters,
+        durationSeconds
+    ) { distance, seconds ->
+        PaceCalculator.calculatePace(distance, seconds)
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "-'--''"
+    )
 
     // 결과 화면 표시 여부 및 데이터
     private val _runResult = MutableStateFlow<RunResult?>(null)
