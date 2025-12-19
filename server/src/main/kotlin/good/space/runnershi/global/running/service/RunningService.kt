@@ -4,6 +4,7 @@ import good.space.runnershi.global.running.entity.Running
 import good.space.runnershi.global.running.repository.RunningRepository
 import good.space.runnershi.model.dto.running.RunCreateRequest
 import good.space.runnershi.model.dto.running.UpdatedUserResponse
+import good.space.runnershi.model.dto.running.newBadgeInfo
 import good.space.runnershi.user.domain.User
 import good.space.runnershi.user.repository.UserRepository
 import jakarta.transaction.Transactional
@@ -28,10 +29,10 @@ class RunningService (
 
     private fun saveRunningData(user: User, request: RunCreateRequest): Long {
         val running = Running(
-            duration = request.runningDuration, // Duration 타입
-            totalTime = request.totalDuration, // Duration 타입
+            duration = request.runningDuration,
+            totalTime = request.totalDuration,
             distanceMeters = request.distanceMeters,
-            startedAt = request.startedAt, // Instant 타입
+            startedAt = request.startedAt,
             user = user
         )
 
@@ -52,7 +53,13 @@ class RunningService (
             userId = this.id ?: throw IllegalStateException("ID가 없는 유저입니다."),
             userExp = this.exp,
             totalRunningDays = this.totalRunningDays,
-            badges = this.achievements.map { it.name }
+            badges = this.achievements.map { it.name },
+            newBadges = this.newAchievements.map {
+                newBadgeInfo(
+                    name = it.name,
+                    exp = it.exp
+                )
+            }
         )
     }
 }

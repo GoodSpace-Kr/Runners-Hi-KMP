@@ -48,6 +48,9 @@ abstract class User(
     var longestDistanceMeters: Double = 0.0
     var averagePace: Double = 0.0
 
+    @Transient
+    val newAchievements : MutableSet<Achievement> = mutableSetOf()
+
     @Convert(converter = KotlinLocalDateConverter::class)
     var lastRunDate: LocalDate? = null
 
@@ -76,7 +79,6 @@ abstract class User(
             this.longestDistanceMeters = request.distanceMeters
         }
 
-
         if (this.bestPace == 0.0 || pace < this.bestPace) {
             this.bestPace = pace
         }
@@ -102,8 +104,9 @@ abstract class User(
 
     private fun updateAchievement() {
         for (achievement in Achievement.entries) {
-            if (achievement.available(this)) {
+            if (achievement.available(this) && !this.achievements.contains(achievement)) {
                 achievements.add(achievement)
+                newAchievements.add(achievement)
             }
         }
     }
