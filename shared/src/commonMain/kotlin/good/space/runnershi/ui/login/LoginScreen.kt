@@ -1,10 +1,11 @@
-package good.space.runnershi.ui.screens
+package good.space.runnershi.ui.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +42,8 @@ fun LoginScreen(
     password: String,
     emailError: String? = null,
     passwordError: String? = null,
+    loginError: String? = null,
+    isLoading: Boolean = false,
 
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
@@ -48,41 +53,59 @@ fun LoginScreen(
 ) {
     val focusManager = LocalFocusManager.current
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(RunnersHiTheme.colorScheme.background)
-            .padding(horizontal = 24.dp)
+            // 배경 터치 시 포커스 해제는 최상위 Box에서 처리하는 것이 깔끔함
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ) { focusManager.clearFocus() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            ) { focusManager.clearFocus() }
     ) {
-        Logo()
-
-        Spacer(modifier = Modifier.height(32.dp))
-
         Column(
             modifier = Modifier
-                .padding(horizontal = 20.dp)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .background(RunnersHiTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { focusManager.clearFocus() },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            EmailInput(email, onEmailChange, emailError)
+            Logo()
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            PasswordInput(password, onPasswordChange, passwordError)
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+            ) {
+                EmailInput(email, onEmailChange, emailError)
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-            LoginButton(onLoginClick)
+                PasswordInput(password, onPasswordChange, passwordError)
 
-            Spacer(modifier = Modifier.height(12.dp))
+                LoginError(loginError)
 
-            SignUpButton(onSignUpClick)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                LoginButton(onLoginClick)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SignUpButton(onSignUpClick)
+            }
         }
+
+        LoadingIndicator(
+            isLoading = isLoading,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
 
@@ -130,6 +153,22 @@ private fun PasswordInput(
 }
 
 @Composable
+private fun LoginError(
+    loginError: String?
+) {
+    if (loginError == null) {
+        return
+    }
+
+    Text(
+        text = loginError,
+        color = RunnersHiTheme.colorScheme.error,
+        style = RunnersHiTheme.typography.bodyMedium,
+        modifier = Modifier.padding(bottom = 12.dp)
+    )
+}
+
+@Composable
 private fun LoginButton(
     onClick: () -> Unit
 ) {
@@ -151,6 +190,21 @@ private fun SignUpButton(
     )
 }
 
+@Composable
+private fun LoadingIndicator(
+    isLoading: Boolean,
+    modifier: Modifier
+) {
+    if (!isLoading) {
+        return
+    }
+
+    CircularProgressIndicator(
+        modifier = modifier,
+        color = RunnersHiTheme.colorScheme.primary
+    )
+}
+
 @Preview
 @Composable
 private fun LoginScreenPreview() {
@@ -167,6 +221,8 @@ private fun LoginScreenPreview() {
             password = password,
             emailError = emailError,
             passwordError = null,
+            loginError = "이메일과 비밀번호를 확인해주세요",
+            isLoading = true,
             onEmailChange = { email = it },
             onPasswordChange = { password = it },
             onLoginClick = { /* 로그인 로직 수행 */ },
