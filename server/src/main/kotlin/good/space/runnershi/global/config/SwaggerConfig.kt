@@ -15,7 +15,13 @@ class SwaggerConfig {
     @Bean
     fun openAPI(): OpenAPI {
         return OpenAPI()
-            .servers(listOf(Server().url("https://runners-hi.site")))
+            .servers(
+                listOf(
+                    Server().url("https://runners-hi.site").description("배포 서버 URL 1"),
+                    Server().url("https://api.runners-hi.site").description("배포 서버 URL 2"),
+                    Server().url("http://localhost:8080").description("로컬")
+                )
+            )
             .addSecurityItem(SecurityRequirement().addList("Bearer Authentication"))
             .components(Components().addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()))
             .info(
