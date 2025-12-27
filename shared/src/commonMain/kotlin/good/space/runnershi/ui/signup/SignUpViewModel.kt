@@ -7,6 +7,7 @@ import good.space.runnershi.model.domain.auth.AuthValidationResult
 import good.space.runnershi.model.domain.auth.Sex
 import good.space.runnershi.model.domain.auth.ValidateEmailUseCase
 import good.space.runnershi.model.domain.auth.ValidatePasswordUseCase
+import good.space.runnershi.model.dto.auth.LoginResponse
 import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
@@ -97,12 +98,29 @@ class SignUpViewModel(
             _uiState.update { it.copy(isLoading = true, signUpError = null) }
 
             try {
-                signUp()
+                val result = signUp()
+
+                if (result.isSuccess) {
+                    _sideEffect.send(SignUpSideEffect.NavigateToHome)
+                } else {
+                    // 회원가입 API 호출 후 실패 응답시 상태 초기화
+                    val errorMessage = result.exceptionOrNull()?.message
+                        ?: "이미 가입된 계정이거나 오류가 발생했습니다."
+
+                    _uiState.update {
+                        SignUpUiState(
+                            currentStep = SignUpStep.EmailPassword,
+                            signUpError = errorMessage,
+                            isLoading = false
+                        )
+                    }
+                }
             } catch (_: Exception) {
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        signUpError = "알 수 없는 오류가 발생했습니다."
+                    SignUpUiState(
+                        currentStep = SignUpStep.EmailPassword,
+                        signUpError = "알 수 없는 오류가 발생했습니다. 다시 시도해주세요.",
+                        isLoading = false
                     )
                 }
             }
@@ -171,7 +189,7 @@ class SignUpViewModel(
         // TODO: 서버로 이름 중복 확인 요청
     }
 
-    private suspend fun signUp() {
+    private suspend fun signUp(): Result<LoginResponse> {
         val currentState = _uiState.value
 
         val result = authRepository.signUp(currentState.toSignUpRequest())
@@ -188,6 +206,8 @@ class SignUpViewModel(
                 )
             }
         }
+
+        return result
     }
 
     private val SignUpUiState.passwordCheckErrorMessage: String?
