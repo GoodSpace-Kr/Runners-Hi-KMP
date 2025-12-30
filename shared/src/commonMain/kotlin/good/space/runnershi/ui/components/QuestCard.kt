@@ -30,7 +30,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun QuestCard(
     title: String,
-    exp: Int,
+    exp: Long,
     isCleared: Boolean = false,
     description: String? = null,
     modifier: Modifier = Modifier
