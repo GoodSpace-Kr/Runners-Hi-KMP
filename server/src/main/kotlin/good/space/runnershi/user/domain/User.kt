@@ -32,9 +32,12 @@ import jakarta.persistence.Table
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import java.time.ZoneId
+import kotlin.collections.mutableSetOf
+import kotlin.getValue
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaInstant
+import jakarta.persistence.Transient
 
 @Inheritance(strategy = InheritanceType.JOINED)
 @Entity
@@ -69,9 +72,6 @@ abstract class User(
     @OneToMany(cascade = [(CascadeType.ALL)], orphanRemoval = true)
     var runnings: MutableList<Running> = mutableListOf()
 
-    @Transient
-    val newAchievements : MutableSet<Achievement> = mutableSetOf()
-
     @Convert(converter = KotlinLocalDateConverter::class)
     var lastRunDate: LocalDate? = null
 
@@ -103,10 +103,34 @@ abstract class User(
     var inventory: UserInventory = UserInventory()
 
     @Transient
-    val newUnlockedAvatars: MutableList<UnlockedItem> = mutableListOf()
+    private var _newAchievements: MutableSet<Achievement>? = null
+    val newAchievements: MutableSet<Achievement>
+        @Transient get() {
+            if (_newAchievements == null) {
+                _newAchievements = mutableSetOf()
+            }
+            return _newAchievements!!
+        }
 
     @Transient
-    val newCompletedQuests: MutableList<Quest> = mutableListOf()
+    private var _newUnlockedAvatars: MutableList<UnlockedItem>? = null
+    val newUnlockedAvatars: MutableList<UnlockedItem>
+        @Transient get() {
+            if (_newUnlockedAvatars == null) {
+                _newUnlockedAvatars = mutableListOf()
+            }
+            return _newUnlockedAvatars!!
+        }
+
+    @Transient
+    private var _newCompletedQuests: MutableList<Quest>? = null
+    val newCompletedQuests: MutableList<Quest>
+        @Transient get() {
+            if (_newCompletedQuests == null) {
+                _newCompletedQuests = mutableListOf()
+            }
+            return _newCompletedQuests!!
+        }
 
     var level: Int = 1
 
@@ -147,8 +171,7 @@ abstract class User(
 
     fun updateRunningStats(running: Running) {
         val durationSeconds = running.duration.toDouble(DurationUnit.SECONDS)
-        val pace: Double = durationSeconds * (1000.0 / running.distanceMeters)
-
+        
         this.totalDistanceMeters += running.distanceMeters.toLong()
 
         this.totalRunningHours += durationSeconds / 3600.0
@@ -157,11 +180,16 @@ abstract class User(
             this.longestDistanceMeters = running.distanceMeters
         }
 
-        if (this.bestPace == 0.0 || pace < this.bestPace) {
-            this.bestPace = pace
+        // pace 계산: distanceMeters가 0이면 Infinity가 되므로 체크 필요
+        if (running.distanceMeters > 0) {
+            val pace: Double = durationSeconds * (1000.0 / running.distanceMeters)
+            if (this.bestPace == 0.0 || pace < this.bestPace) {
+                this.bestPace = pace
+            }
         }
 
-        if (totalDistanceMeters > 0) {
+        // averagePace 계산: totalDistanceMeters가 0이면 Infinity가 되므로 체크 필요
+        if (totalDistanceMeters > 0 && totalRunningHours > 0) {
             val totalSeconds = totalRunningHours * 3600
             this.averagePace = totalSeconds * (1000.0 / totalDistanceMeters)
         }
@@ -184,28 +212,28 @@ abstract class User(
     private fun updateAvatars(){
         HeadItem.entries.forEach { item ->
             if (item.requiredLevel ==  this.level && !inventory.hasHead(item)) {
-                newUnlockedAvatars.add(UnlockedItem.Head(item))
+                newUnlockedAvatars.add(UnlockedItem(item))
                 inventory.addHead(item)
             }
         }
 
         TopItem.entries.forEach { item ->
             if (item.requiredLevel ==  this.level && !inventory.hasTop(item)) {
-                newUnlockedAvatars.add(UnlockedItem.Top(item))
+                newUnlockedAvatars.add(UnlockedItem(item))
                 inventory.addTop(item)
             }
         }
 
         BottomItem.entries.forEach { item ->
             if (item.requiredLevel ==  this.level && !inventory.hasBottom(item)) {
-                newUnlockedAvatars.add(UnlockedItem.Bottom(item))
+                newUnlockedAvatars.add(UnlockedItem(item))
                 inventory.addBottom(item)
             }
         }
 
         ShoeItem.entries.forEach { item ->
             if (item.requiredLevel ==  this.level && !inventory.hasShoe(item)) {
-                newUnlockedAvatars.add(UnlockedItem.Shoe(item))
+                newUnlockedAvatars.add(UnlockedItem(item))
                 inventory.addShoe(item)
             }
         }
