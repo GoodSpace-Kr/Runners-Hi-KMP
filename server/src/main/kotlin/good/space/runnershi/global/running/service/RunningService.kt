@@ -4,6 +4,7 @@ import good.space.runnershi.global.exception.UserNotFoundException
 import good.space.runnershi.global.running.domain.Running
 import good.space.runnershi.global.running.mapper.toLongestDistanceDto
 import good.space.runnershi.global.running.repository.RunningRepository
+import good.space.runnershi.model.dto.running.BadgeInfo
 import good.space.runnershi.model.dto.running.LongestDistance
 import good.space.runnershi.model.dto.running.RunCreateRequest
 import good.space.runnershi.model.dto.running.RunningHistoryResponse
@@ -83,7 +84,7 @@ class RunningService (
     }
 
     private fun updateUserByRunnigData(user: User, running: Running): Unit {
-        user.increaseExp(running.distanceMeters.toLong());
+        user.increaseExp(running.distanceMeters.toLong()/10);
         user.updateRunningStats(running)
     }
 
@@ -109,18 +110,17 @@ class RunningService (
                 shoes = this.avatar.shoes
             ),
             unlockedAvatars = this.newUnlockedAvatars.toList(),
-            badges = this.achievements.map { it.name },
+            badges = this.achievements.map {
+                BadgeInfo(
+                    title = it.title,
+                    description = it.description,
+                    exp = it.exp,
+                )
+                                           },
             newBadges = this.newAchievements.map {
                 NewBadgeInfo(
                     name = it.name,
                     exp = it.exp
-                )
-            },
-            dailyQuests = this.dailyQuests.map { status ->
-                DailyQuestInfo(
-                    title = status.quest.title,
-                    exp = status.quest.exp,
-                    isComplete = status.isCompleted
                 )
             },
             completedQuests = this.newCompletedQuests.map { quest ->
@@ -129,7 +129,9 @@ class RunningService (
                     exp = quest.exp,
                     isComplete = true
                 )
-            }
+            },
+            runningExp = running.distanceMeters.toLong() / 10,
+            requiredExpForLevel = LevelPolicy.getRequiredExpForLevel(this.level)
         )
     }
 }
