@@ -132,35 +132,35 @@ enum class Achievement(
         AchievementCategory.PACE,
         "여유로운 거북이",
         "빠르지 않아도 괜찮아, 완주가 목표니까요. (9'00\"/km)",
-        { user -> user.bestPace <= 540 },
+        { user -> user.bestPace > 0.0 && user.bestPace <= 540 },
         300
     ),
     PACE_LV2(
         AchievementCategory.PACE,
         "총총 걸음",
         "산책보다는 빠르고 달리기라기엔 우아한 속도. (7'00\"/km)",
-        { user -> user.bestPace <=  420},
+        { user -> user.bestPace > 0.0 && user.bestPace <=  420},
         1000
     ),
     PACE_LV3(
         AchievementCategory.PACE,
         "바람의 라이더",
         "귓가를 스치는 바람 소리가 기분 좋게 들려요. (6'00\"/km)",
-        { user -> user.bestPace <=  360},
+        { user -> user.bestPace > 0.0 && user.bestPace <=  360},
         3000
     ),
     PACE_LV4(
         AchievementCategory.PACE,
         "로드 러너",
         "누구보다 빠르게 도로를 질주합니다. (5'00\"/km)",
-        { user -> user.bestPace <=  300},
+        { user -> user.bestPace > 0.0 && user.bestPace <=  300},
         10000
     ),
     PACE_LV5(
         AchievementCategory.PACE,
         "우사인 볼트",
         "이 속도 실화? 땅 위를 날아다니는 수준입니다. (4'00\"/km)",
-        { user -> user.bestPace <=  240},
+        { user -> user.bestPace > 0.0 && user.bestPace <=  240},
         36500
     );
 }

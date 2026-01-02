@@ -14,7 +14,6 @@ import good.space.runnershi.model.dto.user.AvatarInfo
 import good.space.runnershi.state.LevelPolicy
 import good.space.runnershi.user.domain.User
 import good.space.runnershi.user.repository.UserRepository
-import jdk.jfr.Experimental
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
