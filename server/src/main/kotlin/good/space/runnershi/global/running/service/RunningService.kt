@@ -4,12 +4,12 @@ import good.space.runnershi.global.exception.UserNotFoundException
 import good.space.runnershi.global.running.domain.Running
 import good.space.runnershi.global.running.mapper.toLongestDistanceDto
 import good.space.runnershi.global.running.repository.RunningRepository
+import good.space.runnershi.model.dto.running.BadgeInfo
 import good.space.runnershi.model.dto.running.LongestDistance
 import good.space.runnershi.model.dto.running.RunCreateRequest
 import good.space.runnershi.model.dto.running.RunningHistoryResponse
 import good.space.runnershi.model.dto.running.UpdatedUserResponse
 import good.space.runnershi.model.dto.running.dailyQuestInfo
-import good.space.runnershi.model.dto.running.newBadgeInfo
 import good.space.runnershi.model.dto.user.AvatarInfo
 import good.space.runnershi.state.LevelPolicy
 import good.space.runnershi.user.domain.User
@@ -84,7 +84,7 @@ class RunningService (
     }
 
     private fun updateUserByRunnigData(user: User, running: Running): Unit {
-        user.increaseExp(running.distanceMeters.toLong());
+        user.increaseExp(running.distanceMeters.toLong()/10);
         user.updateRunningStats(running)
     }
 
@@ -110,18 +110,18 @@ class RunningService (
                 shoes = this.avatar.shoes
             ),
             unlockedAvatars = this.newUnlockedAvatars.toList(),
-            badges = this.achievements.map { it.name },
-            newBadges = this.newAchievements.map {
-                newBadgeInfo(
-                    name = it.name,
-                    exp = it.exp
+            badges = this.achievements.map {
+                BadgeInfo(
+                    title = it.title,
+                    description = it.description,
+                    exp = it.exp,
                 )
-            },
-            dailyQuests = this.dailyQuests.map { status ->
-                dailyQuestInfo(
-                    title = status.quest.title,
-                    exp = status.quest.exp,
-                    isComplete = status.isCompleted
+                                           },
+            newBadges = this.newAchievements.map {
+                BadgeInfo(
+                    title = it.title,
+                    description = it.description,
+                    exp = it.exp
                 )
             },
             completedQuests = this.newCompletedQuests.map { quest ->
@@ -130,7 +130,9 @@ class RunningService (
                     exp = quest.exp,
                     isComplete = true
                 )
-            }
+            },
+            runningExp = running.distanceMeters.toLong() / 10,
+            requiredExpForLevel = LevelPolicy.getRequiredExpForLevel(this.level)
         )
     }
 }
