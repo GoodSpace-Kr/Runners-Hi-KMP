@@ -66,6 +66,7 @@ fun App() {
                 composable(route = Screen.RUNNING.name) {
                     RunningRoute(
                         navigateToResult = { userInfo, runResult ->
+                            // RESULT 화면으로 이동하기 전에 RUNNING의 savedStateHandle에 데이터 저장
                             navController.currentBackStackEntry?.savedStateHandle?.apply {
                                 val json = Json { ignoreUnknownKeys = true }
 
@@ -75,15 +76,16 @@ fun App() {
 
                                 set("runResult", json.encodeToString(RunningResultToShow.serializer(), runResult))
                             }
-                            navController.navigate(Screen.RESULT.name) {
-                                popUpTo(Screen.Home.name)
-                            }
+                            
+                            // RESULT로 이동 (RUNNING은 백스택에 유지하여 데이터 전달)
+                            navController.navigate(Screen.RESULT.name)
                         }
                     )
                 }
 
                 // 결과 화면
                 composable(route = Screen.RESULT.name) {
+                    // RUNNING이 백스택에 있으므로 previousBackStackEntry로 데이터 접근 가능
                     val previousBackStack = navController.previousBackStackEntry
                     val json = Json { ignoreUnknownKeys = true }
 
@@ -111,14 +113,17 @@ fun App() {
                             userInfo = userInfo,
                             runResult = runResult,
                             onCloseClick = {
+                                // 홈 화면까지 모든 화면을 제거하고 홈으로 이동 (홈 화면은 유지)
                                 navController.navigate(Screen.Home.name) {
-                                    popUpTo(Screen.Home.name) { inclusive = true }
+                                    popUpTo(Screen.Home.name) { inclusive = false }
                                 }
                             }
                         )
                     } else {
                         // 데이터가 없으면 홈으로 튕겨내기
-                        navController.navigate(Screen.Home.name)
+                        navController.navigate(Screen.Home.name) {
+                            popUpTo(Screen.Home.name) { inclusive = false }
+                        }
                     }
                 }
             }

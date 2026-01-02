@@ -5,10 +5,10 @@ import good.space.runnershi.global.running.domain.Running
 import good.space.runnershi.model.domain.auth.Sex
 import good.space.runnershi.model.domain.auth.UserType
 import good.space.runnershi.model.dto.user.UnlockedItem
-import good.space.runnershi.model.type.BottomItem
-import good.space.runnershi.model.type.HeadItem
-import good.space.runnershi.model.type.ShoeItem
-import good.space.runnershi.model.type.TopItem
+import good.space.runnershi.model.type.item.BottomItem
+import good.space.runnershi.model.type.item.HeadItem
+import good.space.runnershi.model.type.item.ShoeItem
+import good.space.runnershi.model.type.item.TopItem
 import good.space.runnershi.state.LevelPolicy
 import jakarta.persistence.CascadeType
 import jakarta.persistence.CollectionTable
@@ -33,7 +33,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import java.time.ZoneId
 import kotlin.collections.mutableSetOf
-import kotlin.getValue
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.toJavaInstant
