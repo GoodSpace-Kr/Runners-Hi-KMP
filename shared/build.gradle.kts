@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildkonfig)
+    alias(libs.plugins.ksp)
 }
 
 val localProperties = Properties().apply {
@@ -83,9 +84,20 @@ kotlin {
                 implementation(libs.ktor.client.android)
                 implementation(libs.play.services.location)
 
+                // 지도
+                implementation(libs.maps.compose)
+                implementation(libs.play.services.maps)
+
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.lifecycle.viewmodel.compose) // ViewModel()
                 implementation(libs.androidx.security.crypto)
+
+                // 위치 서비스
+                implementation(libs.play.services.location)
+
+                // Room DB
+                implementation(libs.androidx.room.runtime)
+                implementation(libs.androidx.room.ktx)
 
                 // 안드로이드 스튜디오 미리보기용 (디버그)
                 implementation(compose.uiTooling)
@@ -115,6 +127,7 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 }
 
@@ -143,4 +156,8 @@ buildkonfig {
 
         buildConfigField(FieldSpec.Type.STRING, "BASE_URL", androidUrl)
     }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
 }
