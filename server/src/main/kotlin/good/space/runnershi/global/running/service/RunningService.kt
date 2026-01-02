@@ -10,7 +10,6 @@ import good.space.runnershi.model.dto.running.RunCreateRequest
 import good.space.runnershi.model.dto.running.RunningHistoryResponse
 import good.space.runnershi.model.dto.running.UpdatedUserResponse
 import good.space.runnershi.model.dto.running.DailyQuestInfo
-import good.space.runnershi.model.dto.running.NewBadgeInfo
 import good.space.runnershi.model.dto.user.AvatarInfo
 import good.space.runnershi.state.LevelPolicy
 import good.space.runnershi.user.domain.User
@@ -67,8 +66,8 @@ class RunningService (
 
     private fun saveRunningData(user: User, request: RunCreateRequest): Running{
         val running = Running(
-            duration = request.runningDuration,
-            totalTime = request.totalDuration,
+            durationMillis = request.runningDuration.inWholeMilliseconds,
+            totalTimeMillis = request.totalDuration.inWholeMilliseconds,
             distanceMeters = request.distanceMeters,
             startedAt = request.startedAt,
             longestNonStopDistance = 0.0,
@@ -118,8 +117,9 @@ class RunningService (
                 )
                                            },
             newBadges = this.newAchievements.map {
-                NewBadgeInfo(
-                    name = it.name,
+                BadgeInfo(
+                    title = it.title,
+                    description = it.description,
                     exp = it.exp
                 )
             },
@@ -131,7 +131,7 @@ class RunningService (
                 )
             },
             runningExp = running.distanceMeters.toLong() / 10,
-            requiredExpForLevel = LevelPolicy.getRequiredExpForLevel(this.level)
+            requiredExpForLevel = LevelPolicy.getRequiredExpForLevel(this.level + 1)
         )
     }
 }
