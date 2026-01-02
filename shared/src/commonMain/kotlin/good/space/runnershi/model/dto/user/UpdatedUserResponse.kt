@@ -12,7 +12,6 @@ data class UpdatedUserResponse(
     val totalRunningDays: Long,
     val badges: List<BadgeInfo>,
     val newBadges: List<BadgeInfo>,
-    val dailyQuests: List<dailyQuestInfo>,
     val avatar: AvatarInfo,
     val unlockedAvatars: List<NewUnlockedAvatarInfo>,
     val userExpProgressPercentage: Int,

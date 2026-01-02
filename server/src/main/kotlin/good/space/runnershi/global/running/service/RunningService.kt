@@ -122,13 +122,6 @@ class RunningService (
                     exp = it.exp
                 )
             },
-            dailyQuests = this.dailyQuests.map { status ->
-                dailyQuestInfo(
-                    title = status.quest.title,
-                    exp = status.quest.exp,
-                    isComplete = status.isCompleted
-                )
-            },
             completedQuests = this.newCompletedQuests.map { quest ->
                 dailyQuestInfo(
                     title = quest.title,
