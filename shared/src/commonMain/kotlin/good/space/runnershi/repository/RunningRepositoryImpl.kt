@@ -3,7 +3,7 @@ package good.space.runnershi.repository
 import good.space.runnershi.mapper.RunMapper
 import good.space.runnershi.model.domain.RunResult
 import good.space.runnershi.model.dto.running.LongestDistance
-import good.space.runnershi.model.dto.running.UpdatedUserResponse
+import good.space.runnershi.model.dto.user.UpdatedUserResponse
 import good.space.runnershi.model.dto.running.percentile.RunPercentileRequest
 import good.space.runnershi.model.dto.running.percentile.RunPercentileResponse
 import good.space.runnershi.network.ApiClient

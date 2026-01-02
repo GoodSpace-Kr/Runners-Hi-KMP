@@ -26,9 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import good.space.runnershi.model.dto.running.BadgeInfo
-import good.space.runnershi.model.dto.running.DailyQuestInfo
-import good.space.runnershi.model.dto.running.UpdatedUserResponse
+import good.space.runnershi.model.dto.user.BadgeInfo
+import good.space.runnershi.model.dto.user.DailyQuestInfo
+import good.space.runnershi.model.dto.user.UpdatedUserResponse
 import good.space.runnershi.model.dto.user.AvatarInfo
 import good.space.runnershi.model.dto.user.UnlockedItem
 import good.space.runnershi.model.type.item.BottomItem
@@ -316,7 +316,6 @@ private val sampleUserInfo = UpdatedUserResponse(
     userExp = 15000L,
     level = 13,
     totalRunningDays = 45L,
-    badges = listOf(),
     newBadges = listOf(
         BadgeInfo("멋지다!", "업적설명", 5000)
     ),

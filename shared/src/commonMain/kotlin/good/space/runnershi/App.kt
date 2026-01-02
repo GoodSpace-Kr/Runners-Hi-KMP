@@ -1,11 +1,10 @@
 package good.space.runnershi
 
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import good.space.runnershi.model.dto.running.UpdatedUserResponse
+import good.space.runnershi.model.dto.user.UpdatedUserResponse
 import good.space.runnershi.ui.home.HomeRoute
 import good.space.runnershi.ui.login.LoginRoute
 import good.space.runnershi.ui.navigation.Screen

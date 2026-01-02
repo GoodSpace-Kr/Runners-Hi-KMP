@@ -6,7 +6,7 @@ import good.space.runnershi.model.domain.RunResult
 import good.space.runnershi.model.domain.location.LocationModel
 import good.space.runnershi.model.domain.running.PaceCalculator
 import good.space.runnershi.model.dto.running.LongestDistance
-import good.space.runnershi.model.dto.running.UpdatedUserResponse
+import good.space.runnershi.model.dto.user.UpdatedUserResponse
 import good.space.runnershi.repository.RunningRepository
 import good.space.runnershi.service.ServiceLauncher
 import good.space.runnershi.state.PauseType

@@ -1,7 +1,5 @@
-package good.space.runnershi.model.dto.running
+package good.space.runnershi.model.dto.user
 
-import good.space.runnershi.model.dto.user.AvatarInfo
-import good.space.runnershi.model.dto.user.UnlockedItem
 import kotlinx.serialization.Serializable
 
 @Serializable

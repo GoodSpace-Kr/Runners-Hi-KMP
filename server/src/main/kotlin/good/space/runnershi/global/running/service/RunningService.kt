@@ -4,12 +4,12 @@ import good.space.runnershi.global.exception.UserNotFoundException
 import good.space.runnershi.global.running.domain.Running
 import good.space.runnershi.global.running.mapper.toLongestDistanceDto
 import good.space.runnershi.global.running.repository.RunningRepository
-import good.space.runnershi.model.dto.running.BadgeInfo
+import good.space.runnershi.model.dto.user.BadgeInfo
 import good.space.runnershi.model.dto.running.LongestDistance
 import good.space.runnershi.model.dto.running.RunCreateRequest
 import good.space.runnershi.model.dto.running.RunningHistoryResponse
-import good.space.runnershi.model.dto.running.UpdatedUserResponse
-import good.space.runnershi.model.dto.running.DailyQuestInfo
+import good.space.runnershi.model.dto.user.UpdatedUserResponse
+import good.space.runnershi.model.dto.user.DailyQuestInfo
 import good.space.runnershi.model.dto.user.AvatarInfo
 import good.space.runnershi.state.LevelPolicy
 import good.space.runnershi.user.domain.User
