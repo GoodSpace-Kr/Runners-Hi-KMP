@@ -4,6 +4,7 @@ import good.space.runnershi.model.domain.auth.ValidateEmailUseCase
 import good.space.runnershi.model.domain.auth.ValidatePasswordUseCase
 import good.space.runnershi.ui.home.HomeViewModel
 import good.space.runnershi.ui.login.LoginViewModel
+import good.space.runnershi.ui.result.ResultViewModel
 import good.space.runnershi.ui.running.RunningViewModel
 import good.space.runnershi.ui.signup.SignUpViewModel
 import org.koin.core.module.Module
@@ -28,6 +29,7 @@ val appModule = module {
         )
     }
     viewModelOf(::RunningViewModel)
+    viewModelOf(::ResultViewModel)
 
     // UseCases
     single { ValidateEmailUseCase() }
