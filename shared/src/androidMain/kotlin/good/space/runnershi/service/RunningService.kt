@@ -237,16 +237,17 @@ class RunningService : Service() {
                 }
             }
             MovementStatus.STOPPED -> {
-                // (기존 동일) 동기적으로 설정 확인
+                // 자동 일시정지 설정이 활성화되어 있을 때만 휴식 감지 시 자동 일시정지
                 if (settingsRepository.isAutoPauseEnabledSync()) {
                     performAutoPause(PauseType.AUTO_PAUSE_REST)
                 }
             }
             MovementStatus.MOVING -> {
-                // (기존 동일) 자동 재개 로직
+                // 자동 일시정지 설정이 활성화되어 있고, AUTO_PAUSE_REST 상태일 때만 재개
                 val pauseType = RunningStateManager.pauseType.value
                 if (!RunningStateManager.isRunning.value &&
-                    pauseType == PauseType.AUTO_PAUSE_REST) {
+                    pauseType == PauseType.AUTO_PAUSE_REST &&
+                    settingsRepository.isAutoPauseEnabledSync()) {
                     performAutoResume()
                 }
             }
