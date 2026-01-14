@@ -10,7 +10,6 @@ import good.space.runnershi.repository.LocalRunningDataSource
 import good.space.runnershi.permission.AndroidLocationPermissionManager
 import good.space.runnershi.permission.LocationPermissionManager
 import good.space.runnershi.service.AndroidServiceLauncher
-import good.space.runnershi.service.RunningServiceController
 import good.space.runnershi.service.ServiceLauncher
 import good.space.runnershi.settings.AndroidSettingsRepository
 import good.space.runnershi.settings.SettingsRepository
@@ -34,15 +33,6 @@ actual val platformModule: Module = module {
     single<ServiceLauncher> { AndroidServiceLauncher(get()) }
     
     single<LocationPermissionManager> { AndroidLocationPermissionManager(get()) }
-
-    single {
-        RunningServiceController(
-            locationTracker = get(),
-            runningDataSource = get(),
-            settingsRepository = get(),
-            notificationHelper = get()
-        )
-    }
 
     single<SettingsRepository> {
         AndroidSettingsRepository(context = get())

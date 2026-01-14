@@ -1,18 +1,30 @@
 package good.space.runnershi.ui.result
 
 import androidx.compose.runtime.Composable
-import good.space.runnershi.model.dto.user.UpdatedUserResponse
-import good.space.runnershi.ui.running.RunningResultToShow
+import androidx.compose.runtime.LaunchedEffect
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ResultRoute(
-    userInfo: UpdatedUserResponse?,
-    runResult: RunningResultToShow,
-    onCloseClick: () -> Unit
+    onCloseClick: () -> Unit,
+    onDataMissing: () -> Unit,
+    viewModel: ResultViewModel = koinViewModel()
 ) {
-    ResultScreen(
-        userInfo = userInfo,
-        runResult = runResult,
-        onCloseClick = onCloseClick
-    )
+    val runResult = viewModel.runResult
+    val userInfo = viewModel.userInfo
+
+    // 데이터가 없으면 (예: 비정상 진입) 즉시 홈으로
+    LaunchedEffect(runResult) {
+        if (runResult == null) {
+            onDataMissing()
+        }
+    }
+
+    if (runResult != null) {
+        ResultScreen(
+            userInfo = userInfo,
+            runResult = runResult,
+            onCloseClick = onCloseClick
+        )
+    }
 }
