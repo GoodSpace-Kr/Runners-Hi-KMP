@@ -21,21 +21,17 @@ fun HomeRoute(
     val coroutineScope = rememberCoroutineScope()
 
     var showSettingsPopup by remember { mutableStateOf(false) }
-    var showTtlDialog by remember { mutableStateOf(false) }
 
     // 화면 진입 시 퀘스트 데이터 조회 (한 번만 실행)
     LaunchedEffect(Unit) {
         viewModel.fetchQuestData()
     }
 
-    // 네비게이션 전 키보드 처리를 제거하고 즉시 네비게이션
-    // 키보드 처리는 RunningRoute에서 수행
-
     HomeScreen(
         uiState = uiState,
         navigateToRun = navigateToRunning,
         onSettingsClick = { showSettingsPopup = true },
-        onTtlClick = { showTtlDialog = true },
+        onTtsClick = viewModel::toggleTts,
         showSettingsPopup = showSettingsPopup,
         onDismissSettingsPopup = { showSettingsPopup = false },
         onToggleAutoPause = {
@@ -47,10 +43,5 @@ fun HomeRoute(
                 navigateToLogin()
             }
         },
-        ttlDialog = {
-            if (showTtlDialog) {
-                /* TODO: TTL 설정 버튼을 클릭했을 때 띄울 다이얼로그 */
-            }
-        }
     )
 }

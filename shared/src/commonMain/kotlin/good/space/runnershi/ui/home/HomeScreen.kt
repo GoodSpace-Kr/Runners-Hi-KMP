@@ -33,6 +33,7 @@ import good.space.runnershi.ui.components.GradientCircleButtonIcon
 import good.space.runnershi.ui.components.Logo
 import good.space.runnershi.ui.components.QuestCard
 import good.space.runnershi.ui.components.SettingsButtonIcon
+import good.space.runnershi.ui.components.SettingsButtonIcon.*
 import good.space.runnershi.ui.components.SettingsCircleButton
 import good.space.runnershi.ui.components.SettingsPopup
 import good.space.runnershi.ui.theme.RunnersHiTheme
@@ -43,12 +44,11 @@ fun HomeScreen(
     uiState: HomeUiState,
     navigateToRun: () -> Unit,
     onSettingsClick: () -> Unit,
-    onTtlClick: () -> Unit,
+    onTtsClick: () -> Unit,
     showSettingsPopup: Boolean,
     onDismissSettingsPopup: () -> Unit,
     onToggleAutoPause: () -> Unit,
     onLogout: suspend () -> Unit,
-    ttlDialog: @Composable () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -82,7 +82,8 @@ fun HomeScreen(
             ButtonSection(
                 onSettingsClick = onSettingsClick,
                 navigateToRun = navigateToRun,
-                onTtlClick = onTtlClick,
+                onTtsClick = onTtsClick,
+                isTtsEnabled = uiState.isTtsEnabled,
                 showSettingsPopup = showSettingsPopup,
                 isAutoPauseEnabled = uiState.isAutoPauseEnabled,
                 onDismissSettingsPopup = onDismissSettingsPopup,
@@ -91,8 +92,6 @@ fun HomeScreen(
             )
         }
     }
-
-    ttlDialog()
 }
 
 @Composable
@@ -150,7 +149,8 @@ private fun ColumnScope.QuestSection(
 private fun ButtonSection(
     onSettingsClick: () -> Unit,
     navigateToRun: () -> Unit,
-    onTtlClick: () -> Unit,
+    onTtsClick: () -> Unit,
+    isTtsEnabled: Boolean,
     showSettingsPopup: Boolean,
     isAutoPauseEnabled: Boolean,
     onDismissSettingsPopup: () -> Unit,
@@ -167,7 +167,7 @@ private fun ButtonSection(
         // 왼쪽: 설정 버튼
         Box {
             SettingsCircleButton(
-                buttonIcon = SettingsButtonIcon.SETTINGS,
+                buttonIcon = SETTINGS,
                 onClick = onSettingsClick,
                 size = 56.dp
             )
@@ -200,8 +200,8 @@ private fun ButtonSection(
 
         // 오른쪽: TTL 설정
         SettingsCircleButton(
-            buttonIcon = SettingsButtonIcon.VOLUME_UP,
-            onClick = onTtlClick,
+            buttonIcon = if (isTtsEnabled) VOLUME_UP else VOLUME_MUTE,
+            onClick = onTtsClick,
             size = 56.dp
         )
     }
@@ -221,12 +221,11 @@ private fun HomeScreenPreview() {
             ),
             navigateToRun = {},
             onSettingsClick = {},
-            onTtlClick = {},
+            onTtsClick = {},
             showSettingsPopup = true,
             onDismissSettingsPopup = {},
             onToggleAutoPause = {},
             onLogout = {},
-            ttlDialog = {}
         )
     }
 }

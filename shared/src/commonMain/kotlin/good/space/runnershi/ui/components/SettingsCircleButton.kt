@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -33,7 +34,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class SettingsButtonIcon {
     SETTINGS,
-    VOLUME_UP
+    VOLUME_UP,
+    VOLUME_MUTE
 }
 
 @Composable
@@ -89,6 +91,7 @@ private fun getIconForSettingsButton(icon: SettingsButtonIcon): ImageVector {
     return when (icon) {
         SettingsButtonIcon.SETTINGS -> Icons.Filled.Settings
         SettingsButtonIcon.VOLUME_UP -> Icons.AutoMirrored.Filled.VolumeUp
+        SettingsButtonIcon.VOLUME_MUTE -> Icons.AutoMirrored.Filled.VolumeMute
     }
 }
 
