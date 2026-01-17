@@ -20,6 +20,7 @@ class QuestService(
         return user.dailyQuests.map { status ->
             QuestResponse(
                 title = status.quest.title,
+                description = status.quest.description,
                 exp = status.quest.exp,
                 isCompleted = status.isCompleted
             )
