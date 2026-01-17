@@ -39,7 +39,8 @@ fun RunnersHiTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    onValidate: (() -> Unit)? = null
+    onValidate: (() -> Unit)? = null,
+    onDone: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -60,7 +61,7 @@ fun RunnersHiTextField(
             isError = errorMessage != null,
             visualTransformation = visualTransformation,
             keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
+            keyboardActions = onDone?.let { KeyboardActions(onDone = { it() }) } ?: keyboardActions,
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { focusState ->
