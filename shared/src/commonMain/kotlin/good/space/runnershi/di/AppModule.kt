@@ -7,6 +7,7 @@ import good.space.runnershi.ui.login.LoginViewModel
 import good.space.runnershi.ui.result.ResultViewModel
 import good.space.runnershi.ui.running.RunningViewModel
 import good.space.runnershi.ui.signup.SignUpViewModel
+import good.space.runnershi.ui.splash.SplashViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -18,6 +19,7 @@ val appModule = module {
     includes(platformModule, networkModule, repositoryModule)
 
     // ViewModels
+    viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::SignUpViewModel)
     viewModel {

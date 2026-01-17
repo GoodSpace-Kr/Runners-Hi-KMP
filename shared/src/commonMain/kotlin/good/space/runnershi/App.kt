@@ -1,6 +1,8 @@
 package good.space.runnershi
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -11,16 +13,29 @@ import good.space.runnershi.ui.result.ResultDataHolder
 import good.space.runnershi.ui.result.ResultRoute
 import good.space.runnershi.ui.running.RunningRoute
 import good.space.runnershi.ui.signup.SignUpRoute
+import good.space.runnershi.ui.splash.SplashRoute
+import good.space.runnershi.ui.splash.SplashViewModel
 import good.space.runnershi.ui.theme.RunnersHiTheme
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun App() {
+fun App(
+    viewModel: SplashViewModel = koinViewModel()
+) {
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+
     RunnersHiTheme {
         val navController = rememberNavController()
 
+        // 로그인 여부가 결정되지 않았다면 스플래시 UI 렌더링
+        if (isLoggedIn == null) {
+            SplashRoute()
+            return@RunnersHiTheme
+        }
+
         NavHost(
             navController = navController,
-            startDestination = Screen.Login.name
+            startDestination = if (isLoggedIn == true) Screen.Home.name else Screen.Login.name
         ) {
             // 로그인 화면
             composable(route = Screen.Login.name) {
@@ -52,7 +67,7 @@ fun App() {
             composable(route = Screen.Home.name) {
                 HomeRoute(
                     navigateToRunning = {
-                        navController.navigate(Screen.RUNNING.name)
+                        navController.navigate(Screen.Running.name)
                     },
                     navigateToLogin = {
                         navController.navigate(Screen.Login.name) {
@@ -63,7 +78,7 @@ fun App() {
             }
 
             // 러닝 화면
-            composable(route = Screen.RUNNING.name) {
+            composable(route = Screen.Running.name) {
                 RunningRoute(
                     navigateToResult = { userInfo, runResult ->
                         // 싱글톤 홀더에 데이터 직접 주입
@@ -71,13 +86,13 @@ fun App() {
                         ResultDataHolder.runResult = runResult
 
                         // 결과 화면으로 이동
-                        navController.navigate(Screen.RESULT.name)
+                        navController.navigate(Screen.Result.name)
                     }
                 )
             }
 
             // 결과 화면
-            composable(route = Screen.RESULT.name) {
+            composable(route = Screen.Result.name) {
                 ResultRoute(
                     onCloseClick = {
                         // 홈 화면까지 모든 화면을 제거하고 홈으로 이동
