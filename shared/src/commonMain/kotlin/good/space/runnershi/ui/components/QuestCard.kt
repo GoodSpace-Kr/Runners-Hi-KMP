@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import good.space.runnershi.ui.theme.RunnersHiTheme
@@ -79,9 +80,12 @@ fun QuestCard(
                 Text(
                     text = title,
                     style = RunnersHiTheme.typography.titleMedium,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.onBackground
+                    color = colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
 
                 // 경험치 or 체크표시
@@ -125,6 +129,9 @@ fun QuestListPreview() {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // 일반 퀘스트
             QuestCard(title = "3km 달리기", exp = 100, isCleared = false)
+
+            // 이름이 긴 퀘스트
+            QuestCard(title = "이름이짱긴달리기퀘스트입니다이름은과연몇글자까지될까", exp = 10000, isCleared = false)
 
             // 클리어된 퀘스트
             QuestCard(title = "15분 달리기", exp = 100, isCleared = true)
