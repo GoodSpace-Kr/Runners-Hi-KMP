@@ -11,6 +11,7 @@ import good.space.runnershi.ui.result.ResultDataHolder
 import good.space.runnershi.ui.result.ResultRoute
 import good.space.runnershi.ui.running.RunningRoute
 import good.space.runnershi.ui.signup.SignUpRoute
+import good.space.runnershi.ui.splash.SplashRoute
 import good.space.runnershi.ui.theme.RunnersHiTheme
 
 @Composable
@@ -20,8 +21,24 @@ fun App() {
 
         NavHost(
             navController = navController,
-            startDestination = Screen.Login.name
+            startDestination = Screen.Splash.name
         ) {
+            // 스플래시 화면
+            composable(route = Screen.Splash.name) {
+                SplashRoute(
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.Login.name) {
+                            popUpTo(Screen.Splash.name) { inclusive = true }
+                        }
+                    },
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.name) {
+                            popUpTo(Screen.Splash.name) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             // 로그인 화면
             composable(route = Screen.Login.name) {
                 LoginRoute(
