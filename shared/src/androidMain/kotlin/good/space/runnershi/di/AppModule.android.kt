@@ -14,7 +14,10 @@ import good.space.runnershi.service.ServiceLauncher
 import good.space.runnershi.settings.AndroidSettingsRepository
 import good.space.runnershi.settings.SettingsRepository
 import good.space.runnershi.util.AndroidNotificationHelper
+import good.space.runnershi.util.AndroidTTS
 import good.space.runnershi.util.NotificationHelper
+import good.space.runnershi.util.TextToSpeech
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -37,4 +40,6 @@ actual val platformModule: Module = module {
     single<SettingsRepository> {
         AndroidSettingsRepository(context = get())
     }
+
+    single<TextToSpeech> { AndroidTTS(androidContext()) }
 }
