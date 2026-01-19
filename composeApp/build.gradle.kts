@@ -75,6 +75,13 @@ kotlin {
     }
 }
 
+val signingProperties = Properties().apply {
+    val propFile = rootProject.file("signing.properties")
+    if (propFile.exists()) {
+        propFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     namespace = "good.space.runnershi"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -93,13 +100,25 @@ android {
         applicationId = "good.space.runnershi"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
 
         // BuildConfig에 BASE_URL 주입
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            // properties 파일에서 읽어온 경로를 바탕으로 파일 객체 생성
+            val path = signingProperties.getProperty("STORE_FILE")
+            storeFile = if (path != null) file(path) else null
+
+            storePassword = signingProperties.getProperty("KEY_STORE_PASSWORD")
+            keyAlias = signingProperties.getProperty("KEY_ALIAS")
+            keyPassword = signingProperties.getProperty("KEY_PASSWORD")
+        }
     }
 
     buildFeatures {
@@ -112,6 +131,8 @@ android {
     }
     buildTypes {
         getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+
             isMinifyEnabled = true // 코드 최적화 및 난독화 활성화
             isShrinkResources = true // 사용하지 않는 리소스 제거
             proguardFiles(
