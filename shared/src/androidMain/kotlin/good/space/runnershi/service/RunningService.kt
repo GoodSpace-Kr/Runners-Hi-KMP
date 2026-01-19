@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
@@ -21,8 +20,11 @@ import good.space.runnershi.settings.AndroidSettingsRepository
 import good.space.runnershi.state.PauseType
 import good.space.runnershi.state.RunningStateManager
 import good.space.runnershi.util.DistanceCalculator
+import good.space.runnershi.util.TextToSpeech
 import good.space.runnershi.util.TimeFormatter
 import good.space.runnershi.util.format
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,8 +35,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
+import org.koin.android.ext.android.inject
 
 @OptIn(ExperimentalTime::class)
 class RunningService : Service() {
@@ -43,6 +44,7 @@ class RunningService : Service() {
     private lateinit var locationTracker: AndroidLocationTracker
     private lateinit var dbSource: LocalRunningDataSource
     private lateinit var settingsRepository: AndroidSettingsRepository
+    private val textToSpeech: TextToSpeech by inject()
     private var lastLocation: LocationModel? = null
 
     // 이동 상태 분석기
@@ -264,11 +266,15 @@ class RunningService : Service() {
                 RunningStateManager.pause(pauseType)
                 val notification = buildOverSpeedNotification()
                 startForeground(NOTIFICATION_ID, notification)
+                // TTS 호출
+                textToSpeechIfEnabled("차량 이동이 감지되어 일시정지합니다")
             }
             PauseType.AUTO_PAUSE_REST -> {
                 // 휴식 감지: 조용히 일시정지
                 RunningStateManager.pause(pauseType)
                 updateNotification("휴식 중", calculateDistanceString())
+                // TTS 호출
+                textToSpeechIfEnabled("휴식이 감지되어 일시정지합니다")
             }
             else -> {
                 // 기타: 일반 일시정지
@@ -297,6 +303,20 @@ class RunningService : Service() {
 
         // 타이머 재시작
         startTimer()
+        
+        // TTS 호출
+        textToSpeechIfEnabled("러닝을 재개합니다")
+    }
+    
+    /**
+     * TTS 설정이 활성화되어 있을 때만 TTS 호출
+     */
+    private fun textToSpeechIfEnabled(text: String) {
+        serviceScope.launch {
+            if (settingsRepository.isTtsEnabledSync()) {
+                textToSpeech.speak(text)
+            }
+        }
     }
 
     /**
@@ -417,7 +437,10 @@ class RunningService : Service() {
             "반복된 차량 이동이 감지되어 기록을 종료합니다."
         )
 
-        // 3. 더 이상 위치 추적 불필요 (배터리 절약)
+        // 3. TTS 호출
+        textToSpeechIfEnabled("반복된 차량 이동이 감지되어 러닝을 종료합니다")
+
+        // 4. 더 이상 위치 추적 불필요 (배터리 절약)
         stopLocationTracking()
         timerJob?.cancel()
     }
