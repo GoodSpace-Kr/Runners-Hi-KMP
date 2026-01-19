@@ -1,0 +1,4 @@
+KEY_STORE_PASSWORD={키 스토어 비밀번호}
+KEY_ALIAS={키 별명}
+KEY_PASSWORD={키 비밀번호}
+STORE_FILE={jks 파일 경로}
