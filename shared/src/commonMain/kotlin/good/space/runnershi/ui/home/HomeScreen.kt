@@ -214,9 +214,24 @@ private fun HomeScreenPreview() {
         HomeScreen(
             uiState = HomeUiState(
                 quests = listOf(
-                    QuestResponse("3km 달리기", 100, false),
-                    QuestResponse("15분 달리기", 150, true),
-                    QuestResponse("10km 달리기", 300, false)
+                    QuestResponse(
+                        title = "3km 달리기",
+                        description = "3km를 한 번에 달려보세요",
+                        exp = 100,
+                        isCompleted = false
+                    ),
+                    QuestResponse(
+                        title = "15분 달리기",
+                        description = "3km를 한 번에 달려보세요",
+                        exp = 150,
+                        isCompleted = true
+                    ),
+                    QuestResponse(
+                        title = "10km 달리기",
+                        description = "10km를 한 번에 달려보세요",
+                        exp = 300,
+                        isCompleted = false
+                    )
                 )
             ),
             navigateToRun = {},
