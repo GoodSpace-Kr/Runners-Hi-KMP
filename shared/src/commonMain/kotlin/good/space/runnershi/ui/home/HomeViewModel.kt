@@ -19,7 +19,8 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val quests: List<QuestResponse> = emptyList(),
     val errorMessage: String? = null,
-    val isAutoPauseEnabled: Boolean = true
+    val isAutoPauseEnabled: Boolean = true,
+    val isTtsEnabled: Boolean = true
 )
 
 class HomeViewModel(
@@ -68,8 +69,12 @@ class HomeViewModel(
     private fun loadSettings() {
         if (settingsRepository != null) {
             viewModelScope.launch {
-                val isEnabled = settingsRepository.isAutoPauseEnabled()
-                _uiState.update { it.copy(isAutoPauseEnabled = isEnabled) }
+                _uiState.update {
+                    it.copy(
+                        isAutoPauseEnabled = settingsRepository.isAutoPauseEnabled(),
+                        isTtsEnabled = settingsRepository.isTtsEnabled()
+                    )
+                }
             }
         }
     }
@@ -80,6 +85,16 @@ class HomeViewModel(
                 val newValue = !_uiState.value.isAutoPauseEnabled
                 settingsRepository.setAutoPauseEnabled(newValue)
                 _uiState.update { it.copy(isAutoPauseEnabled = newValue) }
+            }
+        }
+    }
+
+    fun toggleTts() {
+        if (settingsRepository != null) {
+            viewModelScope.launch {
+                val newValue = !_uiState.value.isTtsEnabled
+                settingsRepository.setTtsEnabled(newValue)
+                _uiState.update { it.copy(isTtsEnabled = newValue) }
             }
         }
     }

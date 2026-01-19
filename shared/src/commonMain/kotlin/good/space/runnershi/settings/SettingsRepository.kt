@@ -7,5 +7,7 @@ package good.space.runnershi.settings
 interface SettingsRepository {
     suspend fun isAutoPauseEnabled(): Boolean
     suspend fun setAutoPauseEnabled(enabled: Boolean)
+    suspend fun isTtsEnabled(): Boolean
+    suspend fun setTtsEnabled(enabled: Boolean)
 }
 

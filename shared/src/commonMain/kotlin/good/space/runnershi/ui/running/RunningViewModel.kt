@@ -9,9 +9,11 @@ import good.space.runnershi.model.dto.running.LongestDistance
 import good.space.runnershi.model.dto.user.UpdatedUserResponse
 import good.space.runnershi.repository.RunningRepository
 import good.space.runnershi.service.ServiceLauncher
+import good.space.runnershi.settings.SettingsRepository
 import good.space.runnershi.state.PauseType
 import good.space.runnershi.state.RunningStateManager
 import good.space.runnershi.util.CalorieCalculator
+import good.space.runnershi.util.TextToSpeech
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -67,7 +69,9 @@ enum class UploadState {
 @OptIn(ExperimentalTime::class)
 class RunningViewModel(
     private val serviceLauncher: ServiceLauncher,
-    private val runningRepository: RunningRepository
+    private val runningRepository: RunningRepository,
+    private val settingsRepository: SettingsRepository,
+    private val textToSpeech: TextToSpeech
 ) : ViewModel() {
 
     // 러닝 종료 시 RoomDB 초기화를 위한 콜백 (Android에서 주입)
@@ -138,22 +142,23 @@ class RunningViewModel(
 
     fun startRun() {
         if (durationSeconds.value > 0) {
+            textToSpeechIfEnabled("러닝을 재개합니다")
             serviceLauncher.resumeService()
         } else {
+            textToSpeechIfEnabled("러닝을 시작합니다")
             serviceLauncher.startService()
         }
     }
 
     fun pauseRun() {
+        textToSpeechIfEnabled("러닝을 일시정지합니다")
         serviceLauncher.pauseService()
-    }
-
-    fun stopRun() {
-        serviceLauncher.stopService()
     }
     
     // 러닝 종료
     fun finishRun() {
+        textToSpeechIfEnabled("러닝을 종료합니다")
+
         // 현재 상태 캡처
         val result = createRunResultSnapshot()
 
@@ -187,6 +192,14 @@ class RunningViewModel(
 
     fun resetState() {
         RunningStateManager.reset()
+    }
+
+    private fun textToSpeechIfEnabled(text: String) {
+        viewModelScope.launch {
+            if (settingsRepository.isTtsEnabled()) {
+                textToSpeech.speak(text)
+            }
+        }
     }
     
     private fun shouldUploadToServer(result: RunResult): Boolean {
