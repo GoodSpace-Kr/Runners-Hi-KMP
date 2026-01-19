@@ -112,7 +112,12 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true // 코드 최적화 및 난독화 활성화
+            isShrinkResources = true // 사용하지 않는 리소스 제거
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -121,7 +126,6 @@ android {
     }
 }
 
-// [변경 3] 최상위 dependencies 블록에서 KSP 설정
 dependencies {
     debugImplementation(compose.uiTooling)
 
