@@ -25,18 +25,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import good.space.runnershi.model.dto.user.QuestResponse
 import good.space.runnershi.ui.components.GradientCircleButton
 import good.space.runnershi.ui.components.GradientCircleButtonColor
 import good.space.runnershi.ui.components.GradientCircleButtonIcon
 import good.space.runnershi.ui.components.Logo
 import good.space.runnershi.ui.components.QuestCard
-import good.space.runnershi.ui.components.SettingsButtonIcon
-import good.space.runnershi.ui.components.SettingsButtonIcon.*
+import good.space.runnershi.ui.components.SettingsButtonIcon.SETTINGS
+import good.space.runnershi.ui.components.SettingsButtonIcon.VOLUME_MUTE
+import good.space.runnershi.ui.components.SettingsButtonIcon.VOLUME_UP
 import good.space.runnershi.ui.components.SettingsCircleButton
 import good.space.runnershi.ui.components.SettingsPopup
 import good.space.runnershi.ui.theme.RunnersHiTheme
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -134,9 +135,9 @@ private fun ColumnScope.QuestSection(
                     items(uiState.quests) { quest ->
                         QuestCard(
                             title = quest.title,
+                            description = quest.description,
                             exp = quest.exp,
-                            isCleared = quest.isCompleted,
-                            description = null
+                            isCleared = quest.isCompleted
                         )
                     }
                 }
@@ -214,9 +215,24 @@ private fun HomeScreenPreview() {
         HomeScreen(
             uiState = HomeUiState(
                 quests = listOf(
-                    QuestResponse("3km 달리기", 100, false),
-                    QuestResponse("15분 달리기", 150, true),
-                    QuestResponse("10km 달리기", 300, false)
+                    QuestResponse(
+                        title = "3km 달리기",
+                        description = "3km를 한 번에 달려보세요",
+                        exp = 100,
+                        isCompleted = false
+                    ),
+                    QuestResponse(
+                        title = "15분 달리기",
+                        description = "3km를 한 번에 달려보세요",
+                        exp = 150,
+                        isCompleted = true
+                    ),
+                    QuestResponse(
+                        title = "10km 달리기",
+                        description = "10km를 한 번에 달려보세요",
+                        exp = 300,
+                        isCompleted = false
+                    )
                 )
             ),
             navigateToRun = {},
