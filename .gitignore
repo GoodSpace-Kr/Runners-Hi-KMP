@@ -31,6 +31,9 @@ captures/
 *.dex
 local.properties
 .navigation/
+*.jks
+*.keystore
+signing.properties
 
 # -------------------------
 # 3. iOS
