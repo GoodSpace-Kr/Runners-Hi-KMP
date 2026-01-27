@@ -121,4 +121,13 @@ class AuthService(
     fun logout(userId: Long) {
         refreshTokenRepository.deleteByUserId(userId)
     }
+
+    @Transactional
+    fun withdraw(userId: Long) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { UserNotFoundException() }
+
+        userRepository.delete(user)
+    }
+
 }

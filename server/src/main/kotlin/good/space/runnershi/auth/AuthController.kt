@@ -74,7 +74,7 @@ class AuthController(
     @Operation(summary = "로그아웃 (모바일/일반)", description = "서버 DB에서 Refresh Token을 삭제하여 더 이상 토큰 갱신이 불가능하게 만듭니다. (클라이언트 측 Access Token 삭제 필요)")
     @PostMapping("/logout")
     fun logout(
-        @Parameter(hidden = true) // 👈 Swagger UI에 입력창 안 뜨게 숨김
+        @Parameter(hidden = true)
         @AuthenticationPrincipal userId: Long
     ): ResponseEntity<String> {
         authService.logout(userId)
@@ -87,8 +87,6 @@ class AuthController(
         val originalToken = authService.login(request)
 
         val cookie = createRefreshTokenCookie(originalToken.refreshToken ?: "")
-
-        // 웹 보안: Body에 나갈 Refresh Token 제거
         val secureTokenResponse = originalToken.copy(refreshToken = null)
 
         return ResponseEntity.ok()
@@ -96,7 +94,7 @@ class AuthController(
             .body(secureTokenResponse)
     }
 
-    @Operation(summary = "토큰 갱신 (웹 전용)", description = "**Cookie**에 저장된 Refresh Token을 감지하여 새로운 토큰을 발급합니다. 갱신된 Refresh Token은 다시 쿠키에 저장됩니다.")
+    @Operation(summary = "토큰 갱신 (웹 전용)", description = "Cookie에 저장된 Refresh Token을 감지하여 새로운 토큰을 발급합니다. 갱신된 Refresh Token은 다시 쿠키에 저장됩니다.")
     @PostMapping("/refresh/web")
     fun refreshWeb(
         @Parameter(hidden = true) // 👈 쿠키는 브라우저가 알아서 보내므로 숨김 처리 (선택사항)
@@ -120,11 +118,40 @@ class AuthController(
     ): ResponseEntity<String> {
 
         authService.logout(userId)
-        val cookie = createRefreshTokenCookie(null) // 쿠키 삭제용 (maxAge = 0)
+        val cookie = createRefreshTokenCookie(null)
 
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, cookie.toString())
             .body("로그아웃 되었습니다.")
+    }
+
+    @Operation(summary = "회원 탈퇴 (Hard Delete)", description = "사용자의 모든 데이터(운동 기록, 토큰 등)를 삭제하고 계정을 삭제합니다.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "204", description = "회원 탈퇴 성공"),
+        ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+    ])
+    @DeleteMapping("/withdraw")
+    fun withdraw(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal userId: Long
+    ): ResponseEntity<Void> {
+        authService.withdraw(userId)
+        return ResponseEntity.noContent().build()
+    }
+
+    @Operation(summary = "회원 탈퇴 (웹 전용)", description = "DB에서 데이터를 삭제하고 브라우저의 Refresh Token 쿠키도 만료시킵니다.")
+    @DeleteMapping("/withdraw/web")
+    fun withdrawWeb(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal userId: Long
+    ): ResponseEntity<Void> {
+        authService.withdraw(userId)
+
+        val cookie = createRefreshTokenCookie(null)
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .build()
     }
 
     private fun createRefreshTokenCookie(refreshToken: String?): ResponseCookie {
