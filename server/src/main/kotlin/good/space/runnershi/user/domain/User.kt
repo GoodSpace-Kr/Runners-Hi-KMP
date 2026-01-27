@@ -1,5 +1,6 @@
 package good.space.runnershi.user.domain
 
+import good.space.runnershi.auth.RefreshToken
 import good.space.runnershi.global.running.converter.KotlinLocalDateConverter
 import good.space.runnershi.global.running.domain.Running
 import good.space.runnershi.model.domain.auth.Sex
@@ -28,6 +29,7 @@ import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
@@ -67,6 +69,9 @@ abstract class User(
     var bestPace: Double = 0.0
     var longestDistanceMeters: Double = 0.0
     var averagePace: Double = 0.0
+
+    @OneToOne(mappedBy = "user", cascade = [CascadeType.REMOVE], orphanRemoval = true)
+    var refreshToken: RefreshToken? = null
 
     @OneToMany(cascade = [(CascadeType.ALL)], orphanRemoval = true)
     var runnings: MutableList<Running> = mutableListOf()
