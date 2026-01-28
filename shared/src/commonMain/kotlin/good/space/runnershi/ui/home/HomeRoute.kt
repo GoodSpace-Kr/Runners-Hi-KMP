@@ -43,5 +43,11 @@ fun HomeRoute(
                 navigateToLogin()
             }
         },
+        onWithdraw = {
+            coroutineScope.launch {
+                viewModel.withdraw()
+                navigateToLogin()
+            }
+        },
     )
 }

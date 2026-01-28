@@ -7,6 +7,7 @@ import good.space.runnershi.model.dto.auth.TokenRefreshResponse
 import good.space.runnershi.model.dto.auth.TokenResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -103,6 +104,21 @@ class AuthRepositoryImpl(
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("로그아웃 실패: ${response.status}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun withdraw(): Result<Unit> {
+        return try {
+            val client = authenticatedHttpClient ?: httpClient
+            val response = client.delete("$baseUrl/$AUTH_API_PREFIX/withdraw")
+
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("회원탈퇴 실패: ${response.status}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

@@ -50,6 +50,7 @@ fun HomeScreen(
     onDismissSettingsPopup: () -> Unit,
     onToggleAutoPause: () -> Unit,
     onLogout: suspend () -> Unit,
+    onWithdraw: suspend () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -89,7 +90,8 @@ fun HomeScreen(
                 isAutoPauseEnabled = uiState.isAutoPauseEnabled,
                 onDismissSettingsPopup = onDismissSettingsPopup,
                 onToggleAutoPause = onToggleAutoPause,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onWithdraw = onWithdraw
             )
         }
     }
@@ -156,7 +158,8 @@ private fun ButtonSection(
     isAutoPauseEnabled: Boolean,
     onDismissSettingsPopup: () -> Unit,
     onToggleAutoPause: () -> Unit,
-    onLogout: suspend () -> Unit
+    onLogout: suspend () -> Unit,
+    onWithdraw: suspend () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     
@@ -181,6 +184,11 @@ private fun ButtonSection(
                     onLogout = {
                         coroutineScope.launch {
                             onLogout()
+                        }
+                    },
+                    onWithdraw = {
+                        coroutineScope.launch {
+                            onWithdraw()
                         }
                     }
                 )
@@ -242,6 +250,7 @@ private fun HomeScreenPreview() {
             onDismissSettingsPopup = {},
             onToggleAutoPause = {},
             onLogout = {},
+            onWithdraw = {},
         )
     }
 }

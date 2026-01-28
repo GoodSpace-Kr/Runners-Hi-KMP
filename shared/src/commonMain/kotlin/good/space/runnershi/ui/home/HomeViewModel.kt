@@ -116,4 +116,21 @@ class HomeViewModel(
         // 4. 로컬 토큰 삭제 (AccessToken과 RefreshToken 제거)
         tokenStorage.clearTokens()
     }
+
+    suspend fun withdraw() {
+        // 1. 서버에 회원탈퇴 요청
+        authRepository.withdraw()
+            .onFailure { e ->
+                throw Exception("회원탈퇴 실패: ${e.message}")
+            }
+
+        // 2. 로컬 DB의 모든 러닝 데이터 삭제
+        runningDataSource?.discardAllRuns()
+
+        // 3. 러닝 상태 초기화 (시간, 거리, 경로 등 모든 러닝 정보 리셋)
+        RunningStateManager.reset()
+
+        // 4. 로컬 토큰 삭제 (AccessToken과 RefreshToken 제거)
+        tokenStorage.clearTokens()
+    }
 }

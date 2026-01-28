@@ -10,6 +10,7 @@ interface AuthRepository {
     suspend fun signUp(request: SignUpRequest): Result<TokenResponse>
     suspend fun refreshAccessToken(refreshToken: String): Result<TokenRefreshResponse>
     suspend fun logout(): Result<Unit>
+    suspend fun withdraw(): Result<Unit>
 
     suspend fun checkEmailAvailability(email: String): Result<Boolean>
 

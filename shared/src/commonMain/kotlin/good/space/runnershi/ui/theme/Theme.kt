@@ -36,6 +36,8 @@ data class RunnersHiCustomColors(
     val inputDisable: Color,
     val inputDisableBorder: Color,
 
+    val delete: Color,
+
     val questLight: Color,
     val questDark: Color,
     val clearedQuestLight: Color,
@@ -68,6 +70,8 @@ val LightCustomColors = RunnersHiCustomColors(
     inputLabel = Blue500,
     inputDisable = Gray300,
     inputDisableBorder = Gray700,
+
+    delete = Red100,
 
     questLight = SkyBlue50,
     questDark = SkyBlue100,
