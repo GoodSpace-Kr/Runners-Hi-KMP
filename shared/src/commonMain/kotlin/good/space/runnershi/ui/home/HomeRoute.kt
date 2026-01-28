@@ -45,9 +45,15 @@ fun HomeRoute(
         },
         onWithdraw = {
             coroutineScope.launch {
-                viewModel.withdraw()
-                navigateToLogin()
+                val result = viewModel.withdraw()
+                result.onSuccess {
+                    navigateToLogin()
+                }
+                // 실패 시에는 에러 메시지가 Snackbar로 표시됨
             }
+        },
+        onWithdrawErrorShown = {
+            viewModel.clearWithdrawError()
         },
     )
 }
