@@ -5,6 +5,7 @@ import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.model.dto.auth.TokenRefreshRequest
 import good.space.runnershi.model.dto.auth.TokenRefreshResponse
 import good.space.runnershi.model.dto.auth.TokenResponse
+import good.space.runnershi.network.ApiClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -20,7 +21,7 @@ import io.ktor.http.isSuccess
 class AuthRepositoryImpl(
     private val httpClient: HttpClient, // 인증 없는 요청용 (login, signup)
     private val baseUrl: String,
-    private val authenticatedHttpClient: HttpClient? = null // 인증 필요한 요청용 (logout) - 선택적
+    private val apiClient: ApiClient? = null // 인증 필요한 요청용 (logout, withdraw) - ApiClient 사용
 ) : AuthRepository {
 
     override suspend fun login(request: LoginRequest): Result<TokenResponse> {
@@ -95,9 +96,9 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> {
         return try {
-            // 인증이 필요한 요청이므로 authenticatedHttpClient 사용 (없으면 httpClient 사용)
-            val client = authenticatedHttpClient ?: httpClient
-            val response = client.post("$baseUrl/$AUTH_API_PREFIX/logout")
+            // 인증이 필요한 요청이므로 ApiClient의 httpClient 사용 (인증은 ApiClient의 httpClient가 자동 처리)
+            val client = apiClient?.httpClient ?: httpClient
+            val response = client.post("${apiClient?.baseUrl ?: baseUrl}/$AUTH_API_PREFIX/logout")
             
             // 2XX 상태코드면 성공 (200 OK 또는 204 NO CONTENT 등)
             if (response.status.isSuccess()) {
@@ -112,8 +113,9 @@ class AuthRepositoryImpl(
 
     override suspend fun withdraw(): Result<Unit> {
         return try {
-            val client = authenticatedHttpClient ?: httpClient
-            val response = client.delete("$baseUrl/$AUTH_API_PREFIX/withdraw")
+            // 인증이 필요한 요청이므로 ApiClient의 httpClient 사용 (인증은 ApiClient의 httpClient가 자동 처리)
+            val client = apiClient?.httpClient ?: httpClient
+            val response = client.delete("${apiClient?.baseUrl ?: baseUrl}/$AUTH_API_PREFIX/withdraw")
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)
