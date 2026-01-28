@@ -3,6 +3,7 @@ package good.space.runnershi.ui.splash
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import good.space.runnershi.auth.TokenStorage
+import good.space.runnershi.network.ApiClient
 import good.space.runnershi.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +11,8 @@ import kotlinx.coroutines.launch
 
 class SplashViewModel(
     private val tokenStorage: TokenStorage,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val apiClient: ApiClient
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(true)
@@ -35,6 +37,8 @@ class SplashViewModel(
                 val result = authRepository.refreshAccessToken(refreshToken)
                 result.onSuccess {
                     tokenStorage.saveTokens(it.accessToken, it.refreshToken)
+                    // 토큰 갱신 후 httpClient 재생성
+                    apiClient.refreshHttpClient()
                     _isLoggedIn.value = true
                 }.onFailure {
                     _isLoggedIn.value = false

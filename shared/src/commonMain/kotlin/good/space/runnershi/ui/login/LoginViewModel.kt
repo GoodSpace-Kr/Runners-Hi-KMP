@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import good.space.runnershi.auth.TokenStorage
 import good.space.runnershi.model.dto.auth.LoginRequest
+import good.space.runnershi.network.ApiClient
 import good.space.runnershi.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,8 @@ sealed interface LoginSideEffect {
 
 class LoginViewModel(
     private val authRepository: AuthRepository,
-    private val tokenStorage: TokenStorage
+    private val tokenStorage: TokenStorage,
+    private val apiClient: ApiClient
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -84,9 +86,11 @@ class LoginViewModel(
 
             loginResult.onSuccess { response ->
                 tokenStorage.saveTokens(response.accessToken, response.refreshToken)
+                // 로그인 후 새로운 토큰이 적용되도록 httpClient를 재생성
+                apiClient.refreshHttpClient()
                 _uiState.update { it.copy(isLoading = false) }
                 _sideEffect.send(LoginSideEffect.NavigateToHome)
-            }.onFailure { e ->
+            }.onFailure { _ ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,

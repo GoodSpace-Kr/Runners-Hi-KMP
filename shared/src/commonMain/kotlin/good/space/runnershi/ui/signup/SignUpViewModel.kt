@@ -9,6 +9,7 @@ import good.space.runnershi.model.domain.auth.ValidateEmailUseCase
 import good.space.runnershi.model.domain.auth.ValidatePasswordUseCase
 import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.model.dto.auth.TokenResponse
+import good.space.runnershi.network.ApiClient
 import good.space.runnershi.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +54,7 @@ sealed interface SignUpSideEffect {
 class SignUpViewModel(
     private val authRepository: AuthRepository,
     private val tokenStorage: TokenStorage,
+    private val apiClient: ApiClient,
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val validatePasswordUseCase: ValidatePasswordUseCase
 ) : ViewModel() {
@@ -127,6 +129,9 @@ class SignUpViewModel(
 
                 result.onSuccess { response ->
                     tokenStorage.saveTokens(response.accessToken, response.refreshToken)
+                    // 회원가입 후 새로운 토큰이 적용되도록 httpClient를 재생성
+                    // 이전 사용자의 토큰이 사용되는 문제를 방지합니다.
+                    apiClient.refreshHttpClient()
                     _uiState.update { it.copy(isLoading = false) }
                     _sideEffect.send(SignUpSideEffect.NavigateToHome)
                 }.onFailure { e ->

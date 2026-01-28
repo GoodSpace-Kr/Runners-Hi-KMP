@@ -25,7 +25,17 @@ class ApiClient(
     private val _authErrorFlow = MutableSharedFlow<Unit>()
     val authErrorFlow = _authErrorFlow.asSharedFlow()
 
-    val httpClient = HttpClient {
+    private var _httpClient: HttpClient? = null
+    
+    val httpClient: HttpClient
+        get() {
+            if (_httpClient == null) {
+                _httpClient = createHttpClient()
+            }
+            return _httpClient!!
+        }
+    
+    private fun createHttpClient(): HttpClient = HttpClient {
         install(ContentNegotiation) {
             json(Json { 
                 prettyPrint = true 
@@ -97,6 +107,16 @@ class ApiClient(
             accessToken = refreshResponse.accessToken,
             refreshToken = refreshToken // refreshToken은 갱신되지 않고 그대로 유지
         )
+    }
+    
+    /**
+     * 토큰이 변경된 후(회원가입, 로그인 등) httpClient를 재생성하여
+     * 새로운 토큰이 적용되도록 합니다.
+     * 회원 탈퇴 후 회원가입 시 이전 사용자의 토큰이 사용되는 문제를 해결합니다.
+     */
+    suspend fun refreshHttpClient() {
+        _httpClient?.close()
+        _httpClient = createHttpClient()
     }
 }
 
