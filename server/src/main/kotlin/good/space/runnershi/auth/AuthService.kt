@@ -11,6 +11,7 @@ import good.space.runnershi.model.dto.auth.LoginRequest
 import good.space.runnershi.model.dto.auth.SignUpRequest
 import good.space.runnershi.model.dto.auth.TokenRefreshResponse
 import good.space.runnershi.model.dto.auth.TokenResponse
+import good.space.runnershi.global.running.repository.RunningRepository
 import good.space.runnershi.user.domain.LocalUser
 import good.space.runnershi.user.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -22,7 +23,8 @@ class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtPlugin: JwtPlugin,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val runningRepository: RunningRepository
 ) {
     fun checkEmailDuplicate(email: String){
         if(userRepository.existsByEmail(email)){
@@ -127,6 +129,8 @@ class AuthService(
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException() }
 
+        // Cascade가 미동작할 때를 대비해 Running 엔티티부터 제거
+        runningRepository.deleteAllByUser(user)
         userRepository.delete(user)
     }
 
