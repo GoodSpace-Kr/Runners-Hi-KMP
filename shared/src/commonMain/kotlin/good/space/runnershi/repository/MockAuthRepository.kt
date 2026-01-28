@@ -32,6 +32,10 @@ class MockAuthRepository : AuthRepository {
         return Result.success(Unit)
     }
 
+    override suspend fun withdraw(): Result<Unit> {
+        return Result.success(Unit)
+    }
+
     /**
      * 이메일 중복 확인 Mock
      * 테스트 방법: "duplicate@test.com"을 입력하면 이미 사용 중인 것으로 간주

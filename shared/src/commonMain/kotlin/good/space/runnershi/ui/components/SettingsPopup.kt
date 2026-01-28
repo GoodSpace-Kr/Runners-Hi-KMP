@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Settings
@@ -41,7 +42,8 @@ fun SettingsPopup(
     offset: IntOffset = IntOffset(x = 120, y = -120),
     onDismissRequest: () -> Unit,
     onToggleAutoPause: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onWithdraw: () -> Unit
 ) {
     Popup(
         alignment = Alignment.BottomStart,
@@ -73,6 +75,17 @@ fun SettingsPopup(
                         onDismissRequest()
                     }
                 )
+
+                SettingsMenuItem(
+                    icon = Icons.Default.Delete,
+                    text = "회원탈퇴",
+                    onClick = {
+                        onWithdraw()
+                        onDismissRequest()
+                    },
+                    iconTint = RunnersHiTheme.custom.delete,
+                    textColor = RunnersHiTheme.custom.delete
+                )
             }
         }
     }
@@ -82,7 +95,9 @@ fun SettingsPopup(
 private fun SettingsMenuItem(
     icon: ImageVector,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    iconTint: Color = Color(0xFF424242),
+    textColor: Color = Color(0xFF424242)
 ) {
     Row(
         modifier = Modifier
@@ -94,7 +109,7 @@ private fun SettingsMenuItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF424242),
+            tint = iconTint,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -102,7 +117,7 @@ private fun SettingsMenuItem(
             text = text,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF424242)
+            color = textColor
         )
     }
 }
@@ -134,7 +149,8 @@ fun PreviewSettingsPopupWithAnchor() {
                     isAutoPauseEnabled = false,
                     onDismissRequest = {},
                     onToggleAutoPause = {},
-                    onLogout = {}
+                    onLogout = {},
+                    onWithdraw = {}
                 )
             }
         }

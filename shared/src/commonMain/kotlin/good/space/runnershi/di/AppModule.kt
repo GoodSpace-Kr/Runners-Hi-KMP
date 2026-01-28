@@ -28,6 +28,7 @@ val appModule = module {
             settingsRepository = getOrNull(),
             authRepository = get(),
             tokenStorage = get(),
+            apiClient = get(),
             runningDataSource = getOrNull()
         )
     }

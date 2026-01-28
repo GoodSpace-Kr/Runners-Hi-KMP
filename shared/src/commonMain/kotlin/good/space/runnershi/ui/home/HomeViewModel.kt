@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import good.space.runnershi.auth.TokenStorage
 import good.space.runnershi.model.dto.user.QuestResponse
+import good.space.runnershi.network.ApiClient
 import good.space.runnershi.repository.AuthRepository
 import good.space.runnershi.repository.LocalRunningDataSource
 import good.space.runnershi.repository.QuestRepository
@@ -20,7 +21,8 @@ data class HomeUiState(
     val quests: List<QuestResponse> = emptyList(),
     val errorMessage: String? = null,
     val isAutoPauseEnabled: Boolean = true,
-    val isTtsEnabled: Boolean = true
+    val isTtsEnabled: Boolean = true,
+    val withdrawErrorMessage: String? = null
 )
 
 class HomeViewModel(
@@ -28,6 +30,7 @@ class HomeViewModel(
     private val settingsRepository: SettingsRepository?,
     private val authRepository: AuthRepository,
     private val tokenStorage: TokenStorage,
+    private val apiClient: ApiClient,
     private val runningDataSource: LocalRunningDataSource?
 ) : ViewModel() {
 
@@ -115,5 +118,39 @@ class HomeViewModel(
 
         // 4. 로컬 토큰 삭제 (AccessToken과 RefreshToken 제거)
         tokenStorage.clearTokens()
+        
+        // 5. httpClient 재생성하여 토큰 캐시 초기화
+        apiClient.refreshHttpClient()
+    }
+
+    suspend fun withdraw(): Result<Unit> {
+        return try {
+            val result = authRepository.withdraw()
+            
+            result.onFailure { e ->
+                _uiState.update {
+                    it.copy(withdrawErrorMessage = "회원탈퇴에 실패했습니다")
+                }
+                return Result.failure(e)
+            }
+
+            runningDataSource?.discardAllRuns()
+            RunningStateManager.reset()
+            tokenStorage.clearTokens()
+            
+            // httpClient 재생성하여 토큰 캐시 초기화
+            apiClient.refreshHttpClient()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(withdrawErrorMessage = "회원탈퇴에 실패했습니다")
+            }
+            Result.failure(e)
+        }
+    }
+
+    fun clearWithdrawError() {
+        _uiState.update { it.copy(withdrawErrorMessage = null) }
     }
 }

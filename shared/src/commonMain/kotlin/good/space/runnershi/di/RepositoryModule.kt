@@ -14,8 +14,8 @@ val repositoryModule = module {
     single<AuthRepository> {
         AuthRepositoryImpl(
             httpClient = get(named("PublicClient")),
-            authenticatedHttpClient = get(named("AuthClient")),
-            baseUrl = get(named("BaseUrl"))
+            baseUrl = get(named("BaseUrl")),
+            apiClient = get<ApiClient>()
         )
     }
 

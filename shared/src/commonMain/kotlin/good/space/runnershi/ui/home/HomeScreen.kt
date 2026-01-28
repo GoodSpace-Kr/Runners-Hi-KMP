@@ -15,8 +15,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +30,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import good.space.runnershi.model.dto.user.QuestResponse
 import good.space.runnershi.ui.components.GradientCircleButton
 import good.space.runnershi.ui.components.GradientCircleButtonColor
@@ -50,48 +60,72 @@ fun HomeScreen(
     onDismissSettingsPopup: () -> Unit,
     onToggleAutoPause: () -> Unit,
     onLogout: suspend () -> Unit,
+    onWithdraw: suspend () -> Unit,
+    onWithdrawErrorShown: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.withdrawErrorMessage) {
+        uiState.withdrawErrorMessage?.let { errorMessage ->
+            snackbarHostState.showSnackbar(
+                message = errorMessage,
+                duration = SnackbarDuration.Short
+            )
+            onWithdrawErrorShown()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 48.dp),
+                .fillMaxSize()
+                .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-            Logo(width = 200.dp)
-            Spacer(modifier = Modifier.height(32.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(48.dp))
+                Logo(width = 200.dp)
+                Spacer(modifier = Modifier.height(32.dp))
 
-            QuestSection(
-                uiState = uiState
-            )
-            Spacer(modifier = Modifier.height(20.dp))
+                QuestSection(
+                    uiState = uiState
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ButtonSection(
+                    onSettingsClick = onSettingsClick,
+                    navigateToRun = navigateToRun,
+                    onTtsClick = onTtsClick,
+                    isTtsEnabled = uiState.isTtsEnabled,
+                    showSettingsPopup = showSettingsPopup,
+                    isAutoPauseEnabled = uiState.isAutoPauseEnabled,
+                    onDismissSettingsPopup = onDismissSettingsPopup,
+                    onToggleAutoPause = onToggleAutoPause,
+                    onLogout = onLogout,
+                    onWithdraw = onWithdraw
+                )
+            }
         }
 
-        Box(
+        SnackbarHost(
+            hostState = snackbarHostState,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 60.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            ButtonSection(
-                onSettingsClick = onSettingsClick,
-                navigateToRun = navigateToRun,
-                onTtsClick = onTtsClick,
-                isTtsEnabled = uiState.isTtsEnabled,
-                showSettingsPopup = showSettingsPopup,
-                isAutoPauseEnabled = uiState.isAutoPauseEnabled,
-                onDismissSettingsPopup = onDismissSettingsPopup,
-                onToggleAutoPause = onToggleAutoPause,
-                onLogout = onLogout
-            )
-        }
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.systemBars)
+        )
     }
 }
 
@@ -156,7 +190,8 @@ private fun ButtonSection(
     isAutoPauseEnabled: Boolean,
     onDismissSettingsPopup: () -> Unit,
     onToggleAutoPause: () -> Unit,
-    onLogout: suspend () -> Unit
+    onLogout: suspend () -> Unit,
+    onWithdraw: suspend () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     
@@ -181,6 +216,11 @@ private fun ButtonSection(
                     onLogout = {
                         coroutineScope.launch {
                             onLogout()
+                        }
+                    },
+                    onWithdraw = {
+                        coroutineScope.launch {
+                            onWithdraw()
                         }
                     }
                 )
@@ -242,6 +282,8 @@ private fun HomeScreenPreview() {
             onDismissSettingsPopup = {},
             onToggleAutoPause = {},
             onLogout = {},
+            onWithdraw = {},
+            onWithdrawErrorShown = {},
         )
     }
 }
