@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -18,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +52,7 @@ fun LoginScreen(
     onSignUpClick: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val passwordFocusRequester = remember { FocusRequester() }
 
     Box(
         modifier = Modifier
@@ -81,11 +85,22 @@ fun LoginScreen(
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
             ) {
-                EmailInput(email, onEmailChange, emailError)
+                EmailInput(
+                    email = email,
+                    onEmailChange = onEmailChange,
+                    emailError = emailError,
+                    onNext = { passwordFocusRequester.requestFocus() }
+                )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                PasswordInput(password, onPasswordChange, passwordError, onLoginClick)
+                PasswordInput(
+                    password = password,
+                    onPasswordChange = onPasswordChange,
+                    passwordError = passwordError,
+                    onLoginClick = onLoginClick,
+                    modifier = Modifier.focusRequester(passwordFocusRequester)
+                )
 
                 LoginError(loginError)
 
@@ -110,7 +125,8 @@ fun LoginScreen(
 private fun EmailInput(
     email: String,
     onEmailChange: (String) -> Unit,
-    emailError: String?
+    emailError: String?,
+    onNext: () -> Unit
 ) {
     RunnersHiTextField(
         title = "Email",
@@ -118,7 +134,11 @@ private fun EmailInput(
         onValueChange = onEmailChange,
         placeholder = "이메일을 입력해주세요",
         errorMessage = emailError,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(onNext = { onNext() })
     )
 }
 
@@ -127,9 +147,11 @@ private fun PasswordInput(
     password: String,
     onPasswordChange: (String) -> Unit,
     passwordError: String?,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     RunnersHiTextField(
+        modifier = modifier,
         title = "Password",
         value = password,
         onValueChange = onPasswordChange,
