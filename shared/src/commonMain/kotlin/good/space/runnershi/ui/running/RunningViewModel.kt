@@ -176,14 +176,16 @@ class RunningViewModel(
         if (shouldUploadToServer(result)) {
             uploadRunData(result)
         } else {
-            // 미달 시 서버 전송 안 함 & DB 정리 (퍼센타일은 조회 가능하므로 조회 시도)
+            // 미달 시 서버 전송 안 함 & DB 정리 (Distance > 0일 때만 퍼센타일 조회)
             viewModelScope.launch {
-                val percentileResult = runningRepository.getPercentile(
-                    distanceMeters = result.totalDistanceMeters,
-                    durationSeconds = result.duration.inWholeSeconds
-                )
-                val percentile = percentileResult.getOrNull()?.topPercent
-                
+                val percentile = if (result.totalDistanceMeters > 0) {
+                    runningRepository.getPercentile(
+                        distanceMeters = result.totalDistanceMeters,
+                        durationSeconds = result.duration.inWholeSeconds
+                    ).getOrNull()?.topPercent
+                } else {
+                    null
+                }
                 _uiEvent.send(RunningUiEvent.RunNotUploadable(result.toShow(percentile)))
                 onFinishCallback?.invoke()
             }
@@ -245,13 +247,15 @@ class RunningViewModel(
             // 러닝 기록 저장
             val saveResult = runningRepository.saveRun(result)
             
-            // 퍼센타일 조회
-            val percentileResult = runningRepository.getPercentile(
-                distanceMeters = result.totalDistanceMeters,
-                durationSeconds = result.duration.inWholeSeconds
-            )
-            
-            val percentile = percentileResult.getOrNull()?.topPercent
+            // Distance > 0일 때만 퍼센타일 조회
+            val percentile = if (result.totalDistanceMeters > 0) {
+                runningRepository.getPercentile(
+                    distanceMeters = result.totalDistanceMeters,
+                    durationSeconds = result.duration.inWholeSeconds
+                ).getOrNull()?.topPercent
+            } else {
+                null
+            }
             
             saveResult
                 .onSuccess { updatedUserResponse ->
