@@ -205,8 +205,7 @@ class RunningViewModel(
     }
     
     private fun shouldUploadToServer(result: RunResult): Boolean {
-        return true
-//        return result.totalDistanceMeters >= 300.0 && result.duration.inWholeSeconds >= 180
+        return result.totalDistanceMeters >= 300.0 && result.duration.inWholeSeconds >= 180
     }
 
     private fun createRunResultSnapshot(): RunResult {

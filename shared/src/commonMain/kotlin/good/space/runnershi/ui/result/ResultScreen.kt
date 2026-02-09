@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -106,6 +108,13 @@ fun ResultScreen(
                     earnedExp = userInfo?.runningExp,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (userInfo == null) {
+                    InfoNotificationCard(
+                        message = "거리가 300m 이상이고 시간이 3분 이상일 때에만 저장돼요!",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 runResult.pacePercentile?.let { percentile ->
                     if (percentile.toIntOrNull()?.let { it <= 50 } == true) {
@@ -282,6 +291,32 @@ private fun SectionTitle(
                 fontWeight = FontWeight.Bold
             ),
             color = RunnersHiTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@Composable
+private fun InfoNotificationCard(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    val customColors = RunnersHiTheme.custom
+    val colorScheme = RunnersHiTheme.colorScheme
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(customColors.resumeLight.copy(alpha = 0.3f))
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            text = message,
+            style = RunnersHiTheme.typography.bodyMedium.copy(
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            ),
+            color = colorScheme.onSurfaceVariant
         )
     }
 }
