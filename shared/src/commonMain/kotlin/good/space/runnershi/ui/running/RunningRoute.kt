@@ -37,6 +37,7 @@ fun RunningRoute(
     val pauseType by viewModel.pauseType.collectAsState()
     val vehicleWarningCount by viewModel.vehicleWarningCount.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
+    val countdownRemaining by viewModel.countdownRemaining.collectAsState()
 
     // 진입 시 키보드/포커스 정리 및 초기화
     LaunchedEffect(Unit) {
@@ -47,9 +48,10 @@ fun RunningRoute(
         // 2. 키보드 애니메이션이 완료되고 이전 화면의 레이아웃 재측정이 완료될 때까지 대기
         delay(300)
 
-        // 3. 초기화 로직 실행
+        // 3. 초기화 및 카운트다운 시작 (새 러닝 시작 시)
         if (!isRunning && durationSeconds == 0L) {
             viewModel.resetState()
+            viewModel.startCountdown()
         }
     }
 
@@ -65,7 +67,8 @@ fun RunningRoute(
         personalBest = personalBest,
         pauseType = pauseType,
         vehicleWarningCount = vehicleWarningCount,
-        uploadState = uploadState
+        uploadState = uploadState,
+        countdownRemaining = countdownRemaining
     )
 
     // Side Effect 처리

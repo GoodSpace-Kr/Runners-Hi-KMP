@@ -15,5 +15,7 @@ data class RunningUiState(
     val personalBest: LongestDistance? = null,
     val pauseType: PauseType = PauseType.NONE,
     val vehicleWarningCount: Int = 0,
-    val uploadState: UploadState
+    val uploadState: UploadState,
+    /** 카운트다운 중일 때 3, 2, 1. null이면 카운트다운 미진행/완료 */
+    val countdownRemaining: Int? = null
 )

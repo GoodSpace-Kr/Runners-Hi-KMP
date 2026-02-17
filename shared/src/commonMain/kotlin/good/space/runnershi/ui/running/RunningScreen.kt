@@ -21,6 +21,7 @@ import good.space.runnershi.model.domain.location.LocationModel
 import good.space.runnershi.model.dto.running.LongestDistance
 import good.space.runnershi.state.PauseType
 import good.space.runnershi.ui.components.CalorieIndicator
+import good.space.runnershi.ui.components.CountdownOverlay
 import good.space.runnershi.ui.components.Logo
 import good.space.runnershi.ui.components.MapCameraFocus
 import good.space.runnershi.ui.components.PersonalBestIndicator
@@ -96,6 +97,13 @@ fun RunningScreen(
 
         if (state.uploadState == UploadState.UPLOADING) {
             LoadingOverlay()
+        }
+
+        if (state.countdownRemaining != null) {
+            CountdownOverlay(
+                count = state.countdownRemaining,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         if (state.pauseType == PauseType.AUTO_PAUSE_VEHICLE) {

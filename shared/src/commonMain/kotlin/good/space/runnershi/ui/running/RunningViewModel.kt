@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -121,6 +122,10 @@ class RunningViewModel(
     private val _uploadState = MutableStateFlow(UploadState.IDLE)
     val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
 
+    /** 카운트다운 중일 때 3, 2, 1 중 현재 숫자. null이면 카운트다운 미진행/완료 */
+    private val _countdownRemaining = MutableStateFlow<Int?>(null)
+    val countdownRemaining: StateFlow<Int?> = _countdownRemaining.asStateFlow()
+
     private val _uiEvent = Channel<RunningUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
     
@@ -194,6 +199,22 @@ class RunningViewModel(
 
     fun resetState() {
         RunningStateManager.reset()
+    }
+
+    /**
+     * 3 -> 2 -> 1 카운트다운을 수행하고, 완료 시 러닝을 시작한다.
+     * 각 숫자마다 TTS로 음성 출력.
+     */
+    fun startCountdown() {
+        viewModelScope.launch {
+            for (count in 3 downTo 1) {
+                _countdownRemaining.value = count
+                textToSpeechIfEnabled(count.toString())
+                delay(1000L)
+            }
+            _countdownRemaining.value = null
+            startRun()
+        }
     }
 
     private fun textToSpeechIfEnabled(text: String) {
